@@ -28,9 +28,9 @@ class VoiceAssistant: ObservableObject {
     
     // TTS control
     private var currentSynthesizer: AVSpeechSynthesizer?
-    private var currentAudioPlayer: AVAudioPlayer? // For OpenVoice playback
-    private var audioPlayerDelegate: AudioDelegate? // Keep reference to prevent deallocation
-    private var audioContinuation: CheckedContinuation<Void, Never>? // Store continuation for early stop
+    var currentAudioPlayer: AVAudioPlayer? // For OpenVoice playback (internal for AudioDelegate access)
+    var audioPlayerDelegate: AudioDelegate? // Keep reference to prevent deallocation (internal for AudioDelegate access)
+    var audioContinuation: CheckedContinuation<Void, Never>? // Store continuation for early stop (internal for AudioDelegate access)
     
     struct ConversationMessage: Identifiable {
         let id = UUID()
