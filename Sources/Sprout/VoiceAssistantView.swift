@@ -59,10 +59,10 @@ struct VoiceAssistantView: View {
                 hideTimer?.invalidate()
                 
                 // Hide after 3 seconds of no updates
-                hideTimer = Timer.scheduledTimer(withTimeInterval: 3.0, repeats: false) { [weak self] _ in
+                hideTimer = Timer.scheduledTimer(withTimeInterval: 3.0, repeats: false) { _ in
                     DispatchQueue.main.async {
                         withAnimation(.easeOut(duration: 0.5)) {
-                            self?.showTranscription = false
+                            showTranscription = false
                         }
                     }
                 }

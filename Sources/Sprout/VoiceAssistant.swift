@@ -349,7 +349,7 @@ class VoiceAssistant: ObservableObject {
         // Get last 5 messages for context (excluding current one)
         let recentMessages = conversationHistory.suffix(5)
         return recentMessages.map { msg in
-            let role = msg.isUser ? "User" : "Sprout"
+            let role = msg.isUser ? "User" : "Seedling!"
             return "\(role): \(msg.text)"
         }.joined(separator: "\n")
     }
@@ -359,12 +359,15 @@ class VoiceAssistant: ObservableObject {
             self.isSpeaking = true
         }
         
+        // Filter emojis from text before speaking (keep original for display)
+        let textForSpeech = removeEmojis(from: text)
+        
         // Use OpenVoice service to generate speech
-        if let audioData = await openVoiceService.synthesize(text: text) {
+        if let audioData = await openVoiceService.synthesize(text: textForSpeech) {
             await playAudio(audioData)
         } else {
             // Fallback to system TTS (silently - OpenVoice errors are expected if models not loaded)
-            await speakWithSystemTTS(text)
+            await speakWithSystemTTS(textForSpeech)
         }
         
         let assistantMessage = ConversationMessage(
@@ -379,6 +382,25 @@ class VoiceAssistant: ObservableObject {
             self.conversationHistory.append(assistantMessage)
             self.isSpeaking = false
         }
+    }
+    
+    // Helper function to remove emojis from text
+    private func removeEmojis(from text: String) -> String {
+        return text.unicodeScalars
+            .filter { scalar in
+                // Filter out emoji ranges
+                !(0x1F600...0x1F64F).contains(scalar.value) && // Emoticons
+                !(0x1F300...0x1F5FF).contains(scalar.value) && // Misc Symbols and Pictographs
+                !(0x1F680...0x1F6FF).contains(scalar.value) && // Transport and Map
+                !(0x1F1E0...0x1F1FF).contains(scalar.value) && // Flags
+                !(0x2600...0x26FF).contains(scalar.value) &&   // Misc symbols
+                !(0x2700...0x27BF).contains(scalar.value) &&   // Dingbats
+                !(0xFE00...0xFE0F).contains(scalar.value) &&   // Variation Selectors
+                !(0x1F900...0x1F9FF).contains(scalar.value) &&  // Supplemental Symbols and Pictographs
+                !(0x1FA00...0x1FAFF).contains(scalar.value)     // Chess Symbols, Symbols and Pictographs Extended-A
+            }
+            .reduce("") { $0 + String($1) }
+            .trimmingCharacters(in: .whitespacesAndNewlines)
     }
     
     private func speakWithSystemTTS(_ text: String) async {

@@ -23,7 +23,7 @@ class OllamaService {
         
         // Create a positive, helpful, and concise system prompt
         let systemPrompt = """
-        You are Sprout, a kind and supportive mind wellbeing assistant. Your role is to:
+        You are Seedling!, a kind and supportive mind wellbeing assistant. Your role is to:
         - Be warm, positive, and encouraging
         - Keep responses SHORT (randomly 1, 2, 3, or 4 sentences - choose randomly each time)
         - Focus on mind wellbeing and emotional support
@@ -42,9 +42,9 @@ class OllamaService {
         
         let fullPrompt: String
         if context.isEmpty {
-            fullPrompt = "\(systemPrompt)\n\nUser: \(userMessage)\nSprout:"
+            fullPrompt = "\(systemPrompt)\n\nUser: \(userMessage)\nSeedling!:"
         } else {
-            fullPrompt = "\(systemPrompt)\n\n\(context)\n\nUser: \(userMessage)\nSprout:"
+            fullPrompt = "\(systemPrompt)\n\n\(context)\n\nUser: \(userMessage)\nSeedling!:"
         }
         
         let body: [String: Any] = [
@@ -55,7 +55,7 @@ class OllamaService {
                 "temperature": 0.7,
                 "top_p": 0.9,
                 "max_tokens": 200, // Increased for answer + analysis
-                "stop": ["User:", "Sprout:"]
+                "stop": ["User:", "Seedling!:"]
             ]
         ]
         
