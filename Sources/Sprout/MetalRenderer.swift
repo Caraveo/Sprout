@@ -207,25 +207,33 @@ class MetalRenderer: NSObject, MTKViewDelegate {
             coord.x *= resolution.x / resolution.y;
             
             // Position orb at bottom of window (offset Y downward)
-            float baseYOffset = -0.6; // Move to bottom
+            float baseYOffset = -0.65; // Move to bottom of window
             
-            // Smooth vertical movement based on audio - rises when reacting, then falls
-            // Use a smooth bounce effect that responds to audio intensity
-            float audioReaction = audioIntensity * 0.8 + audioLevel * 0.4;
+            // Smooth vertical movement that reacts to audio
+            // When audio is detected, orb rises smoothly, then falls back naturally
+            float audioReaction = audioIntensity * 0.9 + audioLevel * 0.5;
             
-            // Create smooth up-and-down movement with easing
-            // When audio is detected, orb rises smoothly, then falls back
-            float bouncePhase = time * 1.2; // Slower, more natural movement
-            float bounceAmount = sin(bouncePhase) * 0.5 + 0.5; // 0 to 1 smooth cycle
+            // Create smooth bounce that responds to audio in real-time
+            // Use a combination of time-based cycle and audio-reactive response
+            float bounceSpeed = 1.5 + audioReaction * 0.8; // Faster when more reactive
+            float bouncePhase = time * bounceSpeed;
             
-            // Only bounce when there's audio activity
-            float verticalOffset = baseYOffset + (bounceAmount * audioReaction * 0.4);
+            // Smooth sine wave for natural up-and-down movement
+            // When audio is high, it bounces more; when low, it settles at bottom
+            float bounceAmount = sin(bouncePhase) * 0.5 + 0.5; // 0 to 1
             
-            // Smooth transition - use easing for natural movement
-            float smoothBounce = smoothstep(0.0, 1.0, bounceAmount);
-            verticalOffset = baseYOffset + (smoothBounce * audioReaction * 0.35);
+            // Apply easing for smooth, natural movement
+            float easedBounce = smoothstep(0.0, 1.0, bounceAmount);
             
-            // Apply vertical offset
+            // Vertical offset: base position + bounce amount scaled by audio reaction
+            // Maximum rise is about 0.4 units when fully reactive
+            float verticalOffset = baseYOffset + (easedBounce * audioReaction * 0.4);
+            
+            // Add subtle continuous gentle movement even when quiet (very subtle)
+            float gentleFloat = sin(time * 0.3) * 0.05 * (1.0 - audioReaction * 0.7);
+            verticalOffset += gentleFloat;
+            
+            // Apply vertical offset to position orb
             coord.y += verticalOffset;
             
             // Scale down the orb to fit better in the window
