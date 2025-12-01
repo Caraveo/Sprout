@@ -1,6 +1,12 @@
 """Speech recognition for voice input."""
 import speech_recognition as sr
-import pyaudio
+try:
+    import pyaudio
+    PYAUDIO_AVAILABLE = True
+except ImportError:
+    PYAUDIO_AVAILABLE = False
+    pyaudio = None
+
 import webrtcvad
 import numpy as np
 from typing import Optional, Callable
@@ -18,14 +24,23 @@ class SpeechRecognizer:
         """Initialize speech recognizer."""
         self.recognizer = sr.Recognizer()
         self.microphone = None
-        self.vad = webrtcvad.Vad(config.vad_aggressiveness)
+        try:
+            self.vad = webrtcvad.Vad(config.vad_aggressiveness)
+        except Exception as e:
+            logger.warning(f"VAD not available: {e}")
+            self.vad = None
         self.is_listening = False
         self.audio_queue = queue.Queue()
         self.callback: Optional[Callable[[str], None]] = None
         
-        # Adjust for ambient noise
-        self._adjust_for_ambient_noise()
-        logger.info("Speech recognizer initialized")
+        # Check if microphone is available
+        try:
+            # Adjust for ambient noise
+            self._adjust_for_ambient_noise()
+            logger.info("Speech recognizer initialized")
+        except Exception as e:
+            logger.warning(f"Microphone not available: {e}. Voice mode will be limited.")
+            logger.info("To enable voice input, install: brew install portaudio && pip install pyaudio")
     
     def _adjust_for_ambient_noise(self):
         """Adjust recognizer for ambient noise."""
@@ -121,6 +136,8 @@ class SpeechRecognizer:
         Returns:
             True if speech detected
         """
+        if self.vad is None:
+            return True  # Default to assuming speech if VAD not available
         try:
             # VAD expects 16-bit PCM, 16kHz, mono
             return self.vad.is_speech(audio_data, sample_rate=16000)

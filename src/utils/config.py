@@ -41,10 +41,19 @@ class Config:
             'DEFAULT_VOICE_EMOTION',
             self.config.get('voice', {}).get('emotion', 'calm')
         )
-        self.supported_languages = os.getenv(
-            'SUPPORTED_LANGUAGES',
-            self.config.get('voice', {}).get('languages', 'en,es,fr,zh,ja,ko')
-        ).split(',')
+        # Handle both string and list formats for languages
+        languages_env = os.getenv('SUPPORTED_LANGUAGES')
+        languages_config = self.config.get('voice', {}).get('languages', 'en,es,fr,zh,ja,ko')
+        
+        if languages_env:
+            # Environment variable (string)
+            self.supported_languages = languages_env.split(',')
+        elif isinstance(languages_config, list):
+            # Config file already has a list
+            self.supported_languages = languages_config
+        else:
+            # Config file has a string
+            self.supported_languages = languages_config.split(',')
         
         # Assistant settings
         self.assistant_name = os.getenv(
