@@ -7,6 +7,7 @@ struct MainView: View {
     @EnvironmentObject var voiceAssistant: VoiceAssistant
     @EnvironmentObject var wellbeingCoach: WellbeingCoach
     @State private var renderer: MetalRenderer?
+    @FocusState private var isFocused: Bool
     
     var body: some View {
         ZStack {
@@ -58,9 +59,20 @@ struct MainView: View {
                 )
                 voiceAssistant.handleTap()
             })
+            .focusable()
+            .focused($isFocused)
         }
         .background(Color.clear)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .onAppear {
+            // Make view focusable for keyboard events
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                NSApplication.shared.keyWindow?.makeFirstResponder(nil)
+            }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("CancelTranscription"))) { _ in
+            voiceAssistant.cancelTranscription()
+        }
     }
 }
 
@@ -103,8 +115,25 @@ class DraggableNSView: NSView {
     private var mouseDownLocation: NSPoint?
     private let dragThreshold: CGFloat = 3.0
     
+    override var acceptsFirstResponder: Bool {
+        return true  // Allow view to receive keyboard events
+    }
+    
     override var mouseDownCanMoveWindow: Bool {
         return true  // Allow window to be moved by dragging
+    }
+    
+    override func keyDown(with event: NSEvent) {
+        // Handle Esc key to cancel transcription
+        if event.keyCode == 53 { // Esc key
+            // Post notification to cancel transcription
+            NotificationCenter.default.post(
+                name: NSNotification.Name("CancelTranscription"),
+                object: nil
+            )
+        } else {
+            super.keyDown(with: event)
+        }
     }
     
     override func hitTest(_ point: NSPoint) -> NSView? {

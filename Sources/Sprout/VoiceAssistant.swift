@@ -42,6 +42,17 @@ class VoiceAssistant: ObservableObject {
         speechRecognizer = SFSpeechRecognizer(locale: Locale(identifier: "en-US"))
         requestSpeechAuthorization()
         setupAnalysisListener()
+        setupCancelListener()
+    }
+    
+    private func setupCancelListener() {
+        NotificationCenter.default.addObserver(
+            forName: NSNotification.Name("CancelTranscription"),
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            self?.cancelTranscription()
+        }
     }
     
     private func setupAnalysisListener() {
@@ -323,6 +334,21 @@ class VoiceAssistant: ObservableObject {
                 self.startListening()
             }
         }
+    }
+    
+    func cancelTranscription() {
+        // Clear current transcription message
+        DispatchQueue.main.async {
+            self.currentMessage = ""
+            self.accumulatedText = ""
+        }
+        
+        // Stop listening if active
+        if isListening {
+            stopListening()
+        }
+        
+        print("⌨️ Transcription cancelled by Esc key")
     }
     
     private func processUserMessage(_ text: String) {
