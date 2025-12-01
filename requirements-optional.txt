@@ -1,9 +1,0 @@
-# Optional dependencies for full voice functionality
-# Install these if you want voice input support
-
-# For macOS, install portaudio first:
-# brew install portaudio
-
-# Then install pyaudio:
-pyaudio>=0.2.11
-

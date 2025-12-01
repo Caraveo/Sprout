@@ -1,2 +1,0 @@
-"""Sprout voice assistant package."""
-

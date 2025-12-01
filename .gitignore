@@ -1,64 +1,46 @@
-# Python
-__pycache__/
-*.py[cod]
-*$py.class
-*.so
-.Python
-build/
-develop-eggs/
-dist/
-downloads/
-eggs/
-.eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
-wheels/
-*.egg-info/
-.installed.cfg
-*.egg
+# Swift
+.build/
+*.xcodeproj
+*.xcworkspace
+DerivedData/
 
-# Virtual Environment
+# Python
 venv/
-env/
-ENV/
-.venv
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+
+# OpenVoice
+openvoice/
+checkpoints/
+checkpoints_v2/
+
+# Resources
+resources/audio/*.wav
+resources/audio/*.mp3
+!resources/audio/.gitkeep
+
+# Logs
+logs/*.log
+*.log
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
 
 # IDE
-.vscode/
 .idea/
+.vscode/
 *.swp
 *.swo
 *~
-
-# Models and Data
-models/
-*.pth
-*.ckpt
-*.onnx
-*.wav
-*.mp3
-*.flac
-
-# Environment
-.env
-.env.local
-
-# Logs
-logs/
-*.log
-
-# OS
-.DS_Store
-Thumbs.db
-
-# Jupyter
-.ipynb_checkpoints/
-*.ipynb
-
-# Audio files
-resources/audio/temp/
-*.tmp
 

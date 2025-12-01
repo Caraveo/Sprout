@@ -1,60 +1,117 @@
 # Quick Start Guide
 
-## First Run
+## Prerequisites
 
-1. **Install dependencies:**
+- macOS 13.0 or later
+- Xcode Command Line Tools: `xcode-select --install`
+- Python 3.9+ with pip
+
+## Installation
+
+### Option 1: Automated Setup (Recommended)
+
 ```bash
-./scripts/setup.sh
+./setup.sh
 ```
 
-2. **Start the application:**
-```bash
-# CLI mode
-python main.py
+This will:
+- Create Python virtual environment
+- Install dependencies
+- Clone OpenVoice repository
+- Build the Swift application
 
-# Or web interface
-python app.py
-# Then open http://localhost:5000
+### Option 2: Manual Setup
+
+1. **Install Python dependencies:**
+```bash
+python3 -m venv venv
+source venv/bin/activate
+pip install -r services/requirements.txt
 ```
 
-## Using Sprout
+2. **Clone OpenVoice:**
+```bash
+git clone https://github.com/myshell-ai/OpenVoice.git
+```
 
-### Text Mode
-- Type your messages and press Enter
-- Sprout will respond with empathetic, wellbeing-focused messages
-- Emojis will appear based on the conversation context
+3. **Download OpenVoice checkpoints:**
+   - Follow instructions at https://github.com/myshell-ai/OpenVoice
+   - Place checkpoints in `checkpoints/` directory
 
-### Voice Mode
-- Speak naturally into your microphone
-- Sprout will recognize your speech and respond with voice
-- Visual emoji feedback appears in the interface
+4. **Build Swift app:**
+```bash
+swift build -c release
+```
 
-## Example Conversations
+## Running Sprout
 
-**User:** "I'm feeling anxious today"
+### Step 1: Start OpenVoice Service
 
-**Sprout:** "🌺 I can sense you're feeling anxious. Let's take some deep breaths together. Remember, it's okay to not be okay. You're still moving forward."
+In one terminal:
+```bash
+source venv/bin/activate
+python services/openvoice_service.py
+```
 
-**User:** "I had a great day!"
+You should see:
+```
+🌱 Starting Sprout OpenVoice Service on port 6000...
+```
 
-**Sprout:** "✨ That's wonderful to hear! I'm so glad you're feeling positive. Celebrating these moments is important."
+### Step 2: Run Sprout
 
-## Features
+In another terminal:
+```bash
+swift run -c release
+```
 
-- **Emotion Detection**: Automatically detects emotions from your input
-- **Personalized Responses**: Tailored to your emotional state
-- **Wellbeing Suggestions**: Provides helpful suggestions when needed
-- **Emoji Feedback**: Visual emojis that match the conversation mood
-- **Voice Cloning**: Natural voice synthesis (with OpenVoice)
+The app will:
+- Appear at the bottom right of your screen
+- Request microphone permission (grant it!)
+- Play a startup sound
+- Show the audio-reactive orb
 
-## Tips
+## First Use
 
-- Be open and honest about how you're feeling
-- Sprout is designed to support, not replace professional help
-- All conversations are processed locally for privacy
-- Use 'quit' or Ctrl+C to exit
+1. **Tap the orb** to start voice listening (red indicator appears)
+2. **Say "Hello"** - the assistant will respond
+3. **Try commands:**
+   - "I feel good" - share your mood
+   - "Breathing exercise" - start guided breathing
+   - "Meditation" - begin mindfulness session
+4. **Open dashboard** - Click the chart icon (top right) to see progress
 
-## Need Help?
+## Troubleshooting
 
-See [INSTALL.md](INSTALL.md) for troubleshooting or check the logs in `logs/sprout.log`.
+### "Speech recognition not authorized"
+- Go to System Settings > Privacy & Security > Microphone
+- Enable microphone access for Terminal (or your terminal app)
+
+### "OpenVoice service error"
+- Make sure the service is running on port 6000
+- Check `python services/openvoice_service.py` is running
+- App will fall back to system TTS if service unavailable
+
+### "Metal is not supported"
+- Ensure you have a Metal-capable GPU
+- Check macOS version is 13.0+
+
+### Build errors
+- Run `swift package clean`
+- Try `swift build -c release` again
+- Check all files are in `Sources/Sprout/`
+
+## Next Steps
+
+- Customize breathing exercises in `WellbeingCoach.swift`
+- Adjust audio sensitivity in `AudioAnalyzer.swift`
+- Modify orb appearance in `MetalRenderer.swift`
+- Add your own voice reference for cloning
+
+## Support
+
+For issues with:
+- **OpenVoice**: See https://github.com/myshell-ai/OpenVoice
+- **Fierro**: See https://github.com/caraveo/fierro
+- **Sprout**: Check the main README.md
 
