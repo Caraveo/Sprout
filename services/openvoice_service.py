@@ -206,24 +206,30 @@ def clone_voice():
 if __name__ == '__main__':
     import socket
     
-    # Try to find an available port starting from 6000
+    # Always try to use port 6000 first (start script should have cleared it)
     port = 6000
-    max_attempts = 10
     
-    for attempt in range(max_attempts):
-        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        result = sock.connect_ex(('127.0.0.1', port))
-        sock.close()
-        
-        if result != 0:
-            # Port is available
-            break
+    # Check if port is available
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    sock.settimeout(1)
+    result = sock.connect_ex(('127.0.0.1', port))
+    sock.close()
+    
+    if result == 0:
+        # Port is in use, try to find alternative
+        print(f"⚠️  Port 6000 is in use, trying alternative ports...")
+        for alt_port in range(6001, 6010):
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            sock.settimeout(1)
+            result = sock.connect_ex(('127.0.0.1', alt_port))
+            sock.close()
+            if result != 0:
+                port = alt_port
+                print(f"⚠️  Using port {port} instead")
+                break
         else:
-            # Port is in use, try next port
-            port += 1
-    
-    if port > 6000:
-        print(f"⚠️  Port 6000 was in use, using port {port} instead")
+            print(f"❌ No available ports found (6000-6009)")
+            sys.exit(1)
     
     print(f"🌱 Starting Sprout OpenVoice Service on port {port}...")
     app.run(host='0.0.0.0', port=port, debug=False)
