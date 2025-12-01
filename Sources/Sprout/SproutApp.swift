@@ -91,6 +91,11 @@ struct WindowAccessor: NSViewRepresentable {
             window.setFrame(NSRect(origin: NSPoint(x: x, y: y), size: windowSize), display: true)
         }
         
+        // Register window with AppModeDetector
+        if let appModeDetector = globalAppModeDetector {
+            appModeDetector.setSproutWindow(window)
+        }
+        
         window.orderFrontRegardless()
         window.makeKeyAndOrderFront(nil)
         NSApp.activate(ignoringOtherApps: true)

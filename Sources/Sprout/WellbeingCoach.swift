@@ -129,6 +129,13 @@ class WellbeingCoach: ObservableObject {
             return
         }
         
+        // Get application mention for context-aware greeting
+        let appMention = globalAppModeDetector?.getApplicationMention()
+        var appGreeting = ""
+        if let app = appMention {
+            appGreeting = "Oh! I see you're in \(app). Would you like help with that? "
+        }
+        
         // Try Ollama first, fallback to simple responses
         var response: String
         let analysis: String? = nil // Will be set via notification
@@ -145,12 +152,19 @@ class WellbeingCoach: ObservableObject {
             fullContext = "\(moodContext)\n\(modeContext)"
         }
         
-        if let ollamaResponse = await ollamaService.generateResponse(for: text, context: fullContext) {
+        // Add app mention to the prompt if this is a new conversation
+        let userMessageWithContext = appGreeting.isEmpty ? text : "\(appGreeting)\(text)"
+        
+        if let ollamaResponse = await ollamaService.generateResponse(for: userMessageWithContext, context: fullContext) {
             response = ollamaResponse
             // Analysis will be set via notification from OllamaService
         } else {
-            // Fallback to simple responses
-            response = generateResponse(for: text)
+            // Fallback to simple responses with app mention
+            if !appGreeting.isEmpty {
+                response = appGreeting + generateResponse(for: text)
+            } else {
+                response = generateResponse(for: text)
+            }
         }
         
         let emoji = getEmojiForResponse(response)
