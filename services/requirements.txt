@@ -4,6 +4,6 @@ numpy>=1.24.0
 scipy>=1.10.0
 torch>=2.0.0
 torchaudio>=2.0.0
-openvoice>=1.0.0
-melo-tts>=1.0.0
+# Note: openvoice and melo-tts need to be installed from source
+# See: https://github.com/myshell-ai/OpenVoice
 

@@ -29,7 +29,7 @@ class VoiceAssistant: ObservableObject {
     }
     
     func requestSpeechAuthorization() {
-        SFSpeechRecognizer.requestAuthorization { [weak self] authStatus in
+        SFSpeechRecognizer.requestAuthorization { authStatus in
             DispatchQueue.main.async {
                 switch authStatus {
                 case .authorized:
@@ -150,7 +150,7 @@ class VoiceAssistant: ObservableObject {
     }
     
     func speak(_ text: String, emoji: String? = nil) async {
-        DispatchQueue.main.async {
+        await MainActor.run {
             self.isSpeaking = true
         }
         
@@ -169,7 +169,7 @@ class VoiceAssistant: ObservableObject {
             emoji: emoji
         )
         
-        DispatchQueue.main.async {
+        await MainActor.run {
             self.conversationHistory.append(assistantMessage)
             self.isSpeaking = false
         }
