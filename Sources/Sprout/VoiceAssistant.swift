@@ -28,6 +28,9 @@ class VoiceAssistant: ObservableObject {
     
     // TTS control
     private var currentSynthesizer: AVSpeechSynthesizer?
+    private var currentAudioPlayer: AVAudioPlayer? // For OpenVoice playback
+    private var audioPlayerDelegate: AudioDelegate? // Keep reference to prevent deallocation
+    private var audioContinuation: CheckedContinuation<Void, Never>? // Store continuation for early stop
     
     struct ConversationMessage: Identifiable {
         let id = UUID()
@@ -506,36 +509,7 @@ class VoiceAssistant: ObservableObject {
                 // Store player reference
                 self.currentAudioPlayer = audioPlayer
                 
-                // Use delegate to know when playback finishes
-                class AudioDelegate: NSObject, AVAudioPlayerDelegate {
-                    weak var voiceAssistant: VoiceAssistant?
-                    
-                    init(voiceAssistant: VoiceAssistant) {
-                        self.voiceAssistant = voiceAssistant
-                    }
-                    
-                    func audioPlayerDidFinishPlaying(_ player: AVAudioPlayer, successfully flag: Bool) {
-                        // Resume continuation and clean up
-                        if let continuation = voiceAssistant?.audioContinuation {
-                            continuation.resume()
-                            voiceAssistant?.audioContinuation = nil
-                        }
-                        voiceAssistant?.currentAudioPlayer = nil
-                        voiceAssistant?.audioPlayerDelegate = nil
-                    }
-                    
-                    func audioPlayerDecodeErrorDidOccur(_ player: AVAudioPlayer, error: Error?) {
-                        print("❌ OpenVoice: Audio decode error - \(error?.localizedDescription ?? "unknown")")
-                        // Resume continuation and clean up
-                        if let continuation = voiceAssistant?.audioContinuation {
-                            continuation.resume()
-                            voiceAssistant?.audioContinuation = nil
-                        }
-                        voiceAssistant?.currentAudioPlayer = nil
-                        voiceAssistant?.audioPlayerDelegate = nil
-                    }
-                }
-                
+                // Create delegate to handle playback completion
                 let delegate = AudioDelegate(voiceAssistant: self)
                 audioPlayer.delegate = delegate
                 
@@ -584,6 +558,36 @@ class SpeechDelegate: NSObject, AVSpeechSynthesizerDelegate {
     
     func speechSynthesizer(_ synthesizer: AVSpeechSynthesizer, didFinish utterance: AVSpeechUtterance) {
         completion()
+    }
+}
+
+// Delegate for AVAudioPlayer to handle completion
+class AudioDelegate: NSObject, AVAudioPlayerDelegate {
+    weak var voiceAssistant: VoiceAssistant?
+    
+    init(voiceAssistant: VoiceAssistant) {
+        self.voiceAssistant = voiceAssistant
+    }
+    
+    func audioPlayerDidFinishPlaying(_ player: AVAudioPlayer, successfully flag: Bool) {
+        // Resume continuation and clean up
+        if let continuation = voiceAssistant?.audioContinuation {
+            continuation.resume()
+            voiceAssistant?.audioContinuation = nil
+        }
+        voiceAssistant?.currentAudioPlayer = nil
+        voiceAssistant?.audioPlayerDelegate = nil
+    }
+    
+    func audioPlayerDecodeErrorDidOccur(_ player: AVAudioPlayer, error: Error?) {
+        print("❌ OpenVoice: Audio decode error - \(error?.localizedDescription ?? "unknown")")
+        // Resume continuation and clean up
+        if let continuation = voiceAssistant?.audioContinuation {
+            continuation.resume()
+            voiceAssistant?.audioContinuation = nil
+        }
+        voiceAssistant?.currentAudioPlayer = nil
+        voiceAssistant?.audioPlayerDelegate = nil
     }
 }
 
