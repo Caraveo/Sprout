@@ -90,6 +90,8 @@ def synthesize():
         text = data.get('text', '')
         language = data.get('language', 'en')
         style = data.get('style', 'default')
+        pitch = data.get('pitch', 1.0)  # Default pitch
+        speed = data.get('speed', 1.0)   # Default speed
         
         if not text:
             return jsonify({'error': 'No text provided'}), 400
@@ -109,13 +111,19 @@ def synthesize():
             device = openvoice_model['device']
             
             # Generate base speech
+            # Try to use a cute boy reference voice if available
             src_path = 'resources/audio/reference.wav'  # Default reference
+            cute_boy_ref = 'resources/audio/cute_boy_reference.wav'  # Cute boy voice reference
+            
+            # Use cute boy reference if style is requested and file exists
+            if style == 'cute_boy' and os.path.exists(cute_boy_ref):
+                src_path = cute_boy_ref
+            
             if not os.path.exists(src_path):
                 # Use MeloTTS to generate base
                 speaker_ids = tts_model.hps.data.spk2id
                 speaker_id = speaker_ids.get('EN-US', 0)
                 
-                speed = 1.0
                 output_path = tempfile.mktemp(suffix='.wav')
                 tts_model.tts_to_file(text, speaker_id, output_path, speed=speed)
                 
