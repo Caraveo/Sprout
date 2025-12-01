@@ -44,6 +44,11 @@ struct MainView: View {
                             .onAppear {
                                 renderer = MetalRenderer()
                                 audioAnalyzer.start()
+                                
+                                // Automatically start listening when app appears
+                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                                    voiceAssistant.startListening()
+                                }
                             }
                             .onChange(of: audioAnalyzer.audioLevel) { newLevel in
                                 renderer?.updateAudioLevel(newLevel)
