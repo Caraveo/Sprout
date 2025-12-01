@@ -12,6 +12,7 @@ whisper-timestamped>=1.15.0
 unidecode>=1.3.0
 eng-to-ipa>=0.0.1
 pypinyin>=0.50.0
+jieba>=0.42.0
 # Note: openvoice and melo-tts need to be installed from source
 # See: https://github.com/myshell-ai/OpenVoice
 
