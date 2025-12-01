@@ -1,17 +1,35 @@
 import Foundation
 
 class OllamaService {
-    private let baseURL: String
-    private let model: String
+    private var baseURL: String
+    private var model: String
     private var session: URLSession
     
-    init(baseURL: String = "http://localhost:11434", model: String = "llama3.2") {
-        self.baseURL = baseURL
-        self.model = model
+    init(baseURL: String? = nil, model: String? = nil) {
+        // Use settings if provided, otherwise use defaults
+        let settings = SettingsManager.shared
+        self.baseURL = baseURL ?? settings.ollamaBaseURL
+        self.model = model ?? settings.ollamaModel
+        
         let config = URLSessionConfiguration.default
         config.timeoutIntervalForRequest = 30
         config.timeoutIntervalForResource = 60
         session = URLSession(configuration: config)
+        
+        // Listen for settings changes
+        NotificationCenter.default.addObserver(
+            forName: UserDefaults.didChangeNotification,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            self?.updateFromSettings()
+        }
+    }
+    
+    private func updateFromSettings() {
+        let settings = SettingsManager.shared
+        baseURL = settings.ollamaBaseURL
+        model = settings.ollamaModel
     }
     
     func generateResponse(for userMessage: String, context: String = "") async -> String? {

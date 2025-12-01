@@ -23,14 +23,13 @@ class MenuBarManager: ObservableObject {
         
         // Create popover with menu content
         let popover = NSPopover()
-        popover.contentSize = NSSize(width: 360, height: 560)
+        popover.contentSize = NSSize(width: 340, height: 520)
         popover.behavior = .transient
-        popover.appearance = NSAppearance(named: .aqua)
         popover.contentViewController = NSHostingController(
             rootView: MenuBarView()
                 .environmentObject(voiceAssistant)
                 .environmentObject(wellbeingCoach)
-                .frame(width: 360, height: 560)
+                .frame(width: 340, height: 520)
         )
         self.popover = popover
     }
@@ -60,54 +59,76 @@ struct MenuBarView: View {
     @EnvironmentObject var voiceAssistant: VoiceAssistant
     @EnvironmentObject var wellbeingCoach: WellbeingCoach
     @Environment(\.dismiss) var dismiss
+    @State private var showingSettings = false
     
     var body: some View {
         ScrollView {
-            VStack(spacing: 0) {
-                // Beautiful header with gradient
-                VStack(spacing: 8) {
-                    HStack {
-                        Text("🌱")
-                            .font(.system(size: 32))
+            VStack(spacing: 24) {
+                // Header with gradient background
+                HStack {
+                    HStack(spacing: 10) {
+                        ZStack {
+                            Circle()
+                                .fill(
+                                    LinearGradient(
+                                        colors: [Color.green.opacity(0.3), Color.accentColor.opacity(0.2)],
+                                        startPoint: .topLeading,
+                                        endPoint: .bottomTrailing
+                                    )
+                                )
+                                .frame(width: 32, height: 32)
+                            Text("🌱")
+                                .font(.system(size: 18))
+                        }
                         Text("Sprout")
-                            .font(.system(size: 22, weight: .bold, design: .rounded))
+                            .font(.system(size: 20, weight: .bold))
                             .foregroundStyle(
                                 LinearGradient(
-                                    colors: [Color.green, Color.mint],
+                                    colors: [Color.green, Color.accentColor],
                                     startPoint: .leading,
                                     endPoint: .trailing
                                 )
                             )
-                        Spacer()
                     }
-                    Text("Your mind wellbeing companion")
-                        .font(.system(size: 11, weight: .medium))
-                        .foregroundColor(.secondary)
+                    Spacer()
+                    Button(action: { showingSettings = true }) {
+                        Image(systemName: "gearshape.fill")
+                            .font(.system(size: 14))
+                            .foregroundColor(.secondary)
+                            .padding(6)
+                            .background(Color.secondary.opacity(0.1))
+                            .clipShape(Circle())
+                    }
+                    .buttonStyle(PlainButtonStyle())
                 }
-                .padding(.top, 24)
-                .padding(.horizontal, 24)
-                .padding(.bottom, 20)
+                .padding(.top, 20)
+                .padding(.horizontal, 20)
+                .padding(.bottom, 12)
                 .background(
                     LinearGradient(
-                        colors: [Color.green.opacity(0.05), Color.mint.opacity(0.02)],
+                        colors: [Color.accentColor.opacity(0.08), Color.clear],
                         startPoint: .top,
                         endPoint: .bottom
                     )
                 )
                 
                 Divider()
-                    .padding(.vertical, 0)
+                    .padding(.vertical, 4)
+                    .padding(.horizontal, 20)
                 
-                // Mood section - beautiful cards
+                // Mood section with beautiful cards
                 VStack(alignment: .leading, spacing: 12) {
                     HStack {
+                        Image(systemName: "heart.fill")
+                            .font(.system(size: 12))
+                            .foregroundColor(.pink)
                         Text("Current Mood")
-                            .font(.system(size: 13, weight: .semibold))
-                            .foregroundColor(.secondary)
-                        Spacer()
+                            .font(.system(size: 14, weight: .semibold))
+                            .foregroundColor(.primary)
                     }
+                    .padding(.bottom, 4)
                     
-                    HStack(spacing: 10) {
+                    HStack(spacing: 12) {
                         ForEach(WellbeingCoach.Mood.allCases, id: \.self) { mood in
                             Button(action: {
                                 withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
@@ -116,9 +137,9 @@ struct MenuBarView: View {
                             }) {
                                 VStack(spacing: 6) {
                                     Text(mood.emoji)
-                                        .font(.system(size: 28))
+                                        .font(.system(size: 26))
                                     Text(mood.rawValue)
-                                        .font(.system(size: 9, weight: .medium))
+                                        .font(.system(size: 10, weight: .medium))
                                         .foregroundColor(.primary)
                                 }
                                 .frame(width: 56, height: 56)
@@ -128,48 +149,51 @@ struct MenuBarView: View {
                                             RoundedRectangle(cornerRadius: 12)
                                                 .fill(
                                                     LinearGradient(
-                                                        colors: [Color.green.opacity(0.3), Color.mint.opacity(0.2)],
+                                                        colors: [Color.accentColor.opacity(0.4), Color.accentColor.opacity(0.2)],
                                                         startPoint: .topLeading,
                                                         endPoint: .bottomTrailing
                                                     )
                                                 )
-                                                .overlay(
-                                                    RoundedRectangle(cornerRadius: 12)
-                                                        .stroke(Color.green.opacity(0.4), lineWidth: 1.5)
-                                                )
+                                                .shadow(color: Color.accentColor.opacity(0.3), radius: 4, x: 0, y: 2)
                                         } else {
                                             RoundedRectangle(cornerRadius: 12)
                                                 .fill(Color.secondary.opacity(0.08))
                                         }
                                     }
                                 )
-                                .shadow(color: wellbeingCoach.currentMood == mood ? Color.green.opacity(0.2) : Color.clear, radius: 4, x: 0, y: 2)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 12)
+                                        .stroke(wellbeingCoach.currentMood == mood ? Color.accentColor.opacity(0.5) : Color.clear, lineWidth: 1.5)
+                                )
                             }
                             .buttonStyle(PlainButtonStyle())
                         }
                     }
                 }
-                .padding(.horizontal, 24)
-                .padding(.vertical, 20)
+                .padding(.horizontal, 20)
+                .padding(.vertical, 16)
                 
                 Divider()
-                    .padding(.vertical, 0)
+                    .padding(.vertical, 8)
+                    .padding(.horizontal, 20)
                 
-                // Quick actions - beautiful gradient buttons
+                // Quick actions with enhanced styling
                 VStack(alignment: .leading, spacing: 12) {
                     HStack {
+                        Image(systemName: "bolt.fill")
+                            .font(.system(size: 12))
+                            .foregroundColor(.orange)
                         Text("Quick Actions")
-                            .font(.system(size: 13, weight: .semibold))
-                            .foregroundColor(.secondary)
-                        Spacer()
+                            .font(.system(size: 14, weight: .semibold))
+                            .foregroundColor(.primary)
                     }
+                    .padding(.bottom, 4)
                     
                     VStack(spacing: 10) {
                         MenuBarActionButton(
                             title: voiceAssistant.isListening ? "Stop Listening" : "Start Listening",
                             emoji: voiceAssistant.isListening ? "⏸️" : "🎤",
-                            color: voiceAssistant.isListening ? .red : .green,
-                            isActive: voiceAssistant.isListening
+                            color: voiceAssistant.isListening ? .red : .green
                         ) {
                             if voiceAssistant.isListening {
                                 voiceAssistant.stopListening()
@@ -181,8 +205,7 @@ struct MenuBarView: View {
                         MenuBarActionButton(
                             title: "Breathing Exercise",
                             emoji: "🌬️",
-                            color: .blue,
-                            isActive: false
+                            color: .blue
                         ) {
                             Task {
                                 await wellbeingCoach.startBreathingExercise()
@@ -192,8 +215,7 @@ struct MenuBarView: View {
                         MenuBarActionButton(
                             title: "Meditation",
                             emoji: "🧘",
-                            color: .purple,
-                            isActive: false
+                            color: .purple
                         ) {
                             Task {
                                 await wellbeingCoach.startMeditationSession()
@@ -201,31 +223,30 @@ struct MenuBarView: View {
                         }
                     }
                 }
-                .padding(.horizontal, 24)
-                .padding(.vertical, 20)
+                .padding(.horizontal, 20)
+                .padding(.vertical, 16)
                 
                 Divider()
-                    .padding(.vertical, 0)
+                    .padding(.vertical, 8)
+                    .padding(.horizontal, 20)
                 
-                // Progress section - beautiful stat cards
+                // Progress section with beautiful cards
                 VStack(alignment: .leading, spacing: 12) {
                     HStack {
+                        Image(systemName: "chart.line.uptrend.xyaxis")
+                            .font(.system(size: 12))
+                            .foregroundColor(.blue)
                         Text("Your Progress")
-                            .font(.system(size: 13, weight: .semibold))
-                            .foregroundColor(.secondary)
-                        Spacer()
+                            .font(.system(size: 14, weight: .semibold))
+                            .foregroundColor(.primary)
                     }
+                    .padding(.bottom, 4)
                     
                     HStack(spacing: 12) {
                         // Streak card
-                        VStack(alignment: .leading, spacing: 8) {
-                            HStack {
-                                Text("🔥")
-                                    .font(.system(size: 16))
-                                Spacer()
-                            }
+                        VStack(alignment: .leading, spacing: 6) {
                             Text("\(wellbeingCoach.dailyStreak)")
-                                .font(.system(size: 28, weight: .bold, design: .rounded))
+                                .font(.system(size: 28, weight: .bold))
                                 .foregroundStyle(
                                     LinearGradient(
                                         colors: [Color.orange, Color.red],
@@ -234,35 +255,30 @@ struct MenuBarView: View {
                                     )
                                 )
                             Text("Day Streak")
-                                .font(.system(size: 10, weight: .medium))
+                                .font(.system(size: 11, weight: .medium))
                                 .foregroundColor(.secondary)
                         }
                         .frame(maxWidth: .infinity)
                         .padding(16)
                         .background(
-                            RoundedRectangle(cornerRadius: 14)
+                            RoundedRectangle(cornerRadius: 12)
                                 .fill(
                                     LinearGradient(
-                                        colors: [Color.orange.opacity(0.1), Color.red.opacity(0.05)],
+                                        colors: [Color.orange.opacity(0.15), Color.red.opacity(0.1)],
                                         startPoint: .topLeading,
                                         endPoint: .bottomTrailing
                                     )
                                 )
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: 14)
-                                        .stroke(Color.orange.opacity(0.2), lineWidth: 1)
-                                )
+                        )
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 12)
+                                .stroke(Color.orange.opacity(0.3), lineWidth: 1)
                         )
                         
                         // Weekly card
-                        VStack(alignment: .leading, spacing: 8) {
-                            HStack {
-                                Text("📊")
-                                    .font(.system(size: 16))
-                                Spacer()
-                            }
+                        VStack(alignment: .leading, spacing: 6) {
                             Text("\(wellbeingCoach.weeklyProgress.values.reduce(0, +))")
-                                .font(.system(size: 28, weight: .bold, design: .rounded))
+                                .font(.system(size: 28, weight: .bold))
                                 .foregroundStyle(
                                     LinearGradient(
                                         colors: [Color.blue, Color.purple],
@@ -271,106 +287,126 @@ struct MenuBarView: View {
                                     )
                                 )
                             Text("This Week")
-                                .font(.system(size: 10, weight: .medium))
+                                .font(.system(size: 11, weight: .medium))
                                 .foregroundColor(.secondary)
                         }
                         .frame(maxWidth: .infinity)
                         .padding(16)
                         .background(
-                            RoundedRectangle(cornerRadius: 14)
+                            RoundedRectangle(cornerRadius: 12)
                                 .fill(
                                     LinearGradient(
-                                        colors: [Color.blue.opacity(0.1), Color.purple.opacity(0.05)],
+                                        colors: [Color.blue.opacity(0.15), Color.purple.opacity(0.1)],
                                         startPoint: .topLeading,
                                         endPoint: .bottomTrailing
                                     )
                                 )
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: 14)
-                                        .stroke(Color.blue.opacity(0.2), lineWidth: 1)
-                                )
+                        )
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 12)
+                                .stroke(Color.blue.opacity(0.3), lineWidth: 1)
                         )
                     }
                 }
-                .padding(.horizontal, 24)
-                .padding(.vertical, 20)
+                .padding(.horizontal, 20)
+                .padding(.vertical, 16)
                 
-                // View full log button - beautiful gradient
+                // View full log button
                 Divider()
-                    .padding(.vertical, 0)
+                    .padding(.vertical, 8)
+                    .padding(.horizontal, 20)
                 
-                Button(action: {
-                    // Open conversation log in a new window
-                    let window = NSWindow(
-                        contentRect: NSRect(x: 0, y: 0, width: 500, height: 600),
-                        styleMask: [.titled, .closable, .resizable],
-                        backing: .buffered,
-                        defer: false
-                    )
-                    window.title = "Conversation Log"
-                    window.contentView = NSHostingView(
-                        rootView: ConversationLogView()
-                            .environmentObject(voiceAssistant)
-                    )
-                    window.center()
-                    window.makeKeyAndOrderFront(nil)
-                }) {
-                    HStack(spacing: 12) {
-                        Image(systemName: "list.bullet.rectangle")
-                            .font(.system(size: 15, weight: .medium))
-                            .foregroundColor(.white)
-                        Text("View Full Conversation Log")
-                            .font(.system(size: 13, weight: .semibold))
-                            .foregroundColor(.white)
-                        Spacer()
-                        Image(systemName: "arrow.right.circle.fill")
-                            .font(.system(size: 14))
-                            .foregroundColor(.white.opacity(0.8))
-                    }
-                    .padding(.horizontal, 18)
-                    .padding(.vertical, 14)
-                    .background(
-                        LinearGradient(
-                            colors: [Color.green, Color.mint],
-                            startPoint: .leading,
-                            endPoint: .trailing
+                VStack(spacing: 10) {
+                    Button(action: {
+                        showingSettings = true
+                    }) {
+                        HStack {
+                            Image(systemName: "gearshape.fill")
+                                .font(.system(size: 14))
+                            Text("Settings")
+                                .font(.system(size: 13, weight: .medium))
+                            Spacer()
+                            Image(systemName: "chevron.right")
+                                .font(.system(size: 11))
+                                .foregroundColor(.secondary)
+                        }
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 12)
+                        .background(
+                            RoundedRectangle(cornerRadius: 10)
+                                .fill(Color.accentColor.opacity(0.12))
                         )
-                    )
-                    .cornerRadius(12)
-                    .shadow(color: Color.green.opacity(0.3), radius: 8, x: 0, y: 4)
+                    }
+                    .buttonStyle(PlainButtonStyle())
+                    
+                    Button(action: {
+                        // Open conversation log in a new window
+                        let window = NSWindow(
+                            contentRect: NSRect(x: 0, y: 0, width: 500, height: 600),
+                            styleMask: [.titled, .closable, .resizable],
+                            backing: .buffered,
+                            defer: false
+                        )
+                        window.title = "Conversation Log"
+                        window.contentView = NSHostingView(
+                            rootView: ConversationLogView()
+                                .environmentObject(voiceAssistant)
+                        )
+                        window.center()
+                        window.makeKeyAndOrderFront(nil)
+                    }) {
+                        HStack {
+                            Image(systemName: "list.bullet.rectangle")
+                                .font(.system(size: 14))
+                            Text("View Full Conversation Log")
+                                .font(.system(size: 13, weight: .medium))
+                            Spacer()
+                            Image(systemName: "chevron.right")
+                                .font(.system(size: 11))
+                                .foregroundColor(.secondary)
+                        }
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 12)
+                        .background(
+                            RoundedRectangle(cornerRadius: 10)
+                                .fill(Color.accentColor.opacity(0.12))
+                        )
+                    }
+                    .buttonStyle(PlainButtonStyle())
                 }
-                .buttonStyle(PlainButtonStyle())
-                .padding(.horizontal, 24)
-                .padding(.vertical, 20)
+                .padding(.horizontal, 20)
+                .padding(.vertical, 8)
+                .sheet(isPresented: $showingSettings) {
+                    SettingsView()
+                }
                 
                 // Recent conversations preview
                 if !voiceAssistant.conversationHistory.isEmpty {
                     Divider()
-                        .padding(.vertical, 0)
+                        .padding(.vertical, 8)
+                        .padding(.horizontal, 20)
                     
-                    VStack(alignment: .leading, spacing: 12) {
-                        HStack {
-                            Text("Recent Conversations")
-                                .font(.system(size: 13, weight: .semibold))
-                                .foregroundColor(.secondary)
-                            Spacer()
-                        }
+                    VStack(alignment: .leading, spacing: 16) {
+                        Text("Recent")
+                            .font(.system(size: 14, weight: .semibold))
+                            .foregroundColor(.primary)
+                            .padding(.bottom, 4)
                         
-                        VStack(spacing: 10) {
+                        VStack(spacing: 12) {
                             ForEach(voiceAssistant.conversationHistory.suffix(2)) { message in
                                 MenuBarConversationBubble(message: message)
                             }
                         }
                     }
-                    .padding(.horizontal, 24)
-                    .padding(.vertical, 20)
+                    .padding(.horizontal, 20)
+                    .padding(.vertical, 12)
                 }
                 
-                Spacer(minLength: 20)
+                Spacer()
             }
+            .padding(.bottom, 20)
         }
-        .frame(width: 360, height: 560)
-        .background(Color(NSColor.controlBackgroundColor))
+        .frame(width: 340, height: 520)
     }
 }
 
@@ -378,50 +414,47 @@ struct MenuBarActionButton: View {
     let title: String
     let emoji: String
     let color: Color
-    let isActive: Bool
     let action: () -> Void
+    @State private var isHovered = false
     
     var body: some View {
         Button(action: action) {
-            HStack(spacing: 14) {
+            HStack(spacing: 12) {
                 Text(emoji)
                     .font(.system(size: 22))
                 Text(title)
-                    .font(.system(size: 13, weight: .semibold))
+                    .font(.system(size: 13, weight: .medium))
                     .foregroundColor(.primary)
                 Spacer()
-                if isActive {
-                    Circle()
-                        .fill(color)
-                        .frame(width: 8, height: 8)
-                        .shadow(color: color.opacity(0.5), radius: 4, x: 0, y: 0)
-                }
             }
             .padding(.horizontal, 16)
             .padding(.vertical, 14)
             .background(
-                RoundedRectangle(cornerRadius: 12)
+                RoundedRectangle(cornerRadius: 10)
                     .fill(
-                        isActive ?
                         LinearGradient(
-                            colors: [color.opacity(0.25), color.opacity(0.15)],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        ) :
-                        LinearGradient(
-                            colors: [color.opacity(0.12), color.opacity(0.06)],
+                            colors: [
+                                color.opacity(isHovered ? 0.3 : 0.2),
+                                color.opacity(isHovered ? 0.25 : 0.15)
+                            ],
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
                         )
                     )
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 12)
-                            .stroke(isActive ? color.opacity(0.4) : color.opacity(0.15), lineWidth: isActive ? 1.5 : 1)
-                    )
             )
-            .shadow(color: isActive ? color.opacity(0.2) : Color.clear, radius: 6, x: 0, y: 3)
+            .overlay(
+                RoundedRectangle(cornerRadius: 10)
+                    .stroke(color.opacity(0.3), lineWidth: 1)
+            )
+            .shadow(color: color.opacity(isHovered ? 0.2 : 0.1), radius: isHovered ? 6 : 3, x: 0, y: 2)
+            .scaleEffect(isHovered ? 1.02 : 1.0)
         }
         .buttonStyle(PlainButtonStyle())
+        .onHover { hovering in
+            withAnimation(.easeInOut(duration: 0.2)) {
+                isHovered = hovering
+            }
+        }
     }
 }
 
@@ -430,91 +463,56 @@ struct MenuBarConversationBubble: View {
     @State private var showAnalysis = false
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            HStack(alignment: .top, spacing: 12) {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack(alignment: .top, spacing: 10) {
                 if let emoji = message.emoji {
                     Text(emoji)
-                        .font(.system(size: 18))
+                        .font(.system(size: 16))
                 }
                 
-                VStack(alignment: .leading, spacing: 6) {
+                VStack(alignment: .leading, spacing: 4) {
                     Text(message.text)
-                        .font(.system(size: 12, weight: .regular))
+                        .font(.system(size: 12))
                         .foregroundColor(.primary)
-                        .lineLimit(3)
-                        .fixedSize(horizontal: false, vertical: true)
+                        .lineLimit(2)
                     
                     Text(message.timestamp, style: .time)
-                        .font(.system(size: 9, weight: .medium))
+                        .font(.system(size: 10))
                         .foregroundColor(.secondary)
                 }
                 
                 Spacer()
             }
             
-            // Analysis preview - beautiful expandable
+            // Analysis preview
             if let analysis = message.analysis, !analysis.isEmpty {
                 Button(action: {
-                    withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
-                        showAnalysis.toggle()
-                    }
+                    showAnalysis.toggle()
                 }) {
-                    HStack(spacing: 6) {
-                        Image(systemName: "brain.head.profile")
-                            .font(.system(size: 9, weight: .medium))
-                        Text("Analysis")
+                    HStack {
+                        Text("💭 Analysis")
                             .font(.system(size: 10, weight: .medium))
+                            .foregroundColor(.secondary)
                         Image(systemName: showAnalysis ? "chevron.up" : "chevron.down")
-                            .font(.system(size: 8))
+                            .font(.system(size: 9))
+                            .foregroundColor(.secondary)
                     }
-                    .foregroundColor(.secondary)
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 4)
-                    .background(Color.secondary.opacity(0.08))
-                    .cornerRadius(6)
                 }
                 .buttonStyle(PlainButtonStyle())
                 .padding(.top, 2)
                 
                 if showAnalysis {
                     Text(analysis)
-                        .font(.system(size: 10, weight: .regular))
+                        .font(.system(size: 10))
                         .foregroundColor(.secondary)
                         .italic()
-                        .padding(.top, 6)
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 8)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .background(Color.secondary.opacity(0.05))
-                        .cornerRadius(8)
-                        .transition(.opacity.combined(with: .move(edge: .top)))
+                        .padding(.top, 4)
                 }
             }
         }
-        .padding(14)
-        .background(
-            RoundedRectangle(cornerRadius: 12)
-                .fill(
-                    message.isUser ?
-                    LinearGradient(
-                        colors: [Color.blue.opacity(0.15), Color.blue.opacity(0.08)],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    ) :
-                    LinearGradient(
-                        colors: [Color.green.opacity(0.15), Color.green.opacity(0.08)],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    )
-                )
-                .overlay(
-                    RoundedRectangle(cornerRadius: 12)
-                        .stroke(
-                            message.isUser ? Color.blue.opacity(0.2) : Color.green.opacity(0.2),
-                            lineWidth: 1
-                        )
-                )
-        )
+        .padding(12)
+        .background(message.isUser ? Color.blue.opacity(0.2) : Color.green.opacity(0.2))
+        .cornerRadius(8)
     }
 }
 
