@@ -81,8 +81,17 @@ class VoiceAssistant: ObservableObject {
             }
             
             if let error = error {
-                print("❌ Recognition error: \(error)")
-                self.stopListening()
+                let nsError = error as NSError
+                // Only log non-cancellation errors
+                if nsError.code != 301 && nsError.code != 216 { // 301 = canceled, 216 = no speech (normal)
+                    print("❌ Recognition error: \(error.localizedDescription)")
+                }
+                // Don't stop listening for "no speech" errors - user might still be speaking
+                if nsError.code == 301 { // Canceled
+                    self.stopListening()
+                } else if nsError.code != 216 { // No speech detected is normal, don't stop
+                    self.stopListening()
+                }
             }
         }
         
@@ -117,9 +126,15 @@ class VoiceAssistant: ObservableObject {
     
     func handleTap() {
         if isListening {
-            stopListening()
+            // Small delay to allow any final recognition to complete
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                self.stopListening()
+            }
         } else {
-            startListening()
+            // Small delay before starting to avoid immediate cancellation
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+                self.startListening()
+            }
         }
     }
     
@@ -158,7 +173,7 @@ class VoiceAssistant: ObservableObject {
         if let audioData = await openVoiceService.synthesize(text: text) {
             await playAudio(audioData)
         } else {
-            // Fallback to system TTS
+            // Fallback to system TTS (silently - OpenVoice errors are expected if models not loaded)
             await speakWithSystemTTS(text)
         }
         

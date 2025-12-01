@@ -31,13 +31,13 @@ class OpenVoiceService {
             
             guard let httpResponse = response as? HTTPURLResponse,
                   httpResponse.statusCode == 200 else {
-                print("❌ OpenVoice service error")
+                // Silently fail - will use system TTS fallback
                 return nil
             }
             
             return data
         } catch {
-            print("❌ OpenVoice request failed: \(error)")
+            // Silently fail - will use system TTS fallback
             return nil
         }
     }
