@@ -22,7 +22,7 @@ struct SproutApp: App {
                 .environmentObject(voiceAssistant)
                 .environmentObject(wellbeingCoach)
                 .background(TransparentBackground())
-                .frame(width: 400, height: 500)
+                .frame(width: 300, height: 300)
                 .background(WindowAccessor())
                 .onAppear {
                     globalVoiceAssistant = voiceAssistant
@@ -31,7 +31,7 @@ struct SproutApp: App {
                 }
         }
         .windowResizability(.contentSize)
-        .defaultSize(width: 400, height: 500)
+        .defaultSize(width: 300, height: 300)
     }
     
 }
@@ -79,10 +79,10 @@ struct WindowAccessor: NSViewRepresentable {
             contentView.addTrackingArea(trackingArea)
         }
         
-        // Position at bottom right
+        // Position at bottom right - smaller window for just orb
         if let screen = NSScreen.main {
             let screenRect = screen.visibleFrame
-            let windowSize = NSSize(width: 400, height: 500)
+            let windowSize = NSSize(width: 300, height: 300)
             let x = screenRect.maxX - windowSize.width - 50
             let y = screenRect.minY + 50
             window.setFrame(NSRect(origin: NSPoint(x: x, y: y), size: windowSize), display: true)

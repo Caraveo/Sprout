@@ -10,73 +10,54 @@ struct MainView: View {
     
     var body: some View {
         ZStack {
-            // Background with blur
-            VisualEffectView(material: .hudWindow, blendingMode: .behindWindow)
+            // Metal orb view - full screen, no background
+            MetalView(renderer: $renderer)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .onAppear {
+                    renderer = MetalRenderer()
+                    audioAnalyzer.start()
+                    
+                    // Automatically start listening when app appears
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                        voiceAssistant.startListening()
+                    }
+                }
+                .onChange(of: audioAnalyzer.audioLevel) { newLevel in
+                    renderer?.updateAudioLevel(newLevel)
+                }
+                .onChange(of: audioAnalyzer.audioFrequency) { newFreq in
+                    renderer?.updateAudioFrequency(newFreq)
+                }
+                .onChange(of: audioAnalyzer.audioIntensity) { newIntensity in
+                    renderer?.updateAudioIntensity(newIntensity)
+                    NotificationCenter.default.post(
+                        name: NSNotification.Name("AudioIntensityChanged"),
+                        object: newIntensity
+                    )
+                }
             
-            VStack(spacing: 0) {
-                // Header with title (simplified - menu moved to menu bar)
-                HStack {
-                    Text("🌱 Sprout")
-                        .font(.system(size: 24, weight: .bold))
-                        .foregroundColor(.white)
-                    Spacer()
-                }
-                .padding()
-                .background(Color.black.opacity(0.3))
-                
-                // Main content area
-                ZStack {
-                        // Metal orb view
-                        MetalView(renderer: $renderer)
-                            .frame(maxWidth: .infinity, maxHeight: .infinity)
-                            .onAppear {
-                                renderer = MetalRenderer()
-                                audioAnalyzer.start()
-                                
-                                // Automatically start listening when app appears
-                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                                    voiceAssistant.startListening()
-                                }
-                            }
-                            .onChange(of: audioAnalyzer.audioLevel) { newLevel in
-                                renderer?.updateAudioLevel(newLevel)
-                            }
-                            .onChange(of: audioAnalyzer.audioFrequency) { newFreq in
-                                renderer?.updateAudioFrequency(newFreq)
-                            }
-                            .onChange(of: audioAnalyzer.audioIntensity) { newIntensity in
-                                renderer?.updateAudioIntensity(newIntensity)
-                                NotificationCenter.default.post(
-                                    name: NSNotification.Name("AudioIntensityChanged"),
-                                    object: newIntensity
-                                )
-                            }
-                        
-                        // Emoji overlay in center
-                        EmojiView()
-                            .allowsHitTesting(false)
-                        
-                        // Voice assistant status - always visible
-                        VStack {
-                            Spacer()
-                            VoiceAssistantView()
-                                .padding(.horizontal, 12)
-                                .padding(.bottom, 20)
-                                .frame(maxWidth: .infinity)
-                        }
-                        
-                        // Invisible draggable overlay with touch reaction
-                        DraggableArea(onTap: {
-                            renderer?.triggerTouchReaction()
-                            NotificationCenter.default.post(
-                                name: NSNotification.Name("ShowEmoji"),
-                                object: nil
-                            )
-                            voiceAssistant.handleTap()
-                        })
-                }
+            // Emoji overlay in center
+            EmojiView()
+                .allowsHitTesting(false)
+            
+            // Voice assistant status - minimal, shows when active
+            VStack {
+                Spacer()
+                VoiceAssistantView()
+                    .padding(.horizontal, 12)
+                    .padding(.bottom, 20)
+                    .frame(maxWidth: .infinity)
             }
+            
+            // Invisible draggable overlay with touch reaction
+            DraggableArea(onTap: {
+                renderer?.triggerTouchReaction()
+                NotificationCenter.default.post(
+                    name: NSNotification.Name("ShowEmoji"),
+                    object: nil
+                )
+                voiceAssistant.handleTap()
+            })
         }
         .background(Color.clear)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
