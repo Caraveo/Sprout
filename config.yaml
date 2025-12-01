@@ -1,0 +1,35 @@
+# Sprout Voice Assistant Configuration
+
+openvoice:
+  model_path: ./models/openvoice
+  device: cpu  # or cuda if GPU available
+
+voice:
+  speed: 1.0
+  emotion: calm
+  languages:
+    - en
+    - es
+    - fr
+    - zh
+    - ja
+    - ko
+
+assistant:
+  name: Sprout
+  mode: wellbeing
+  max_history: 50
+
+audio:
+  sample_rate: 24000
+  chunk_size: 1024
+  vad_aggressiveness: 2
+
+emoji:
+  enabled: true
+  animation_speed: 1.0
+
+logging:
+  level: INFO
+  file: logs/sprout.log
+
