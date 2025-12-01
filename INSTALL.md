@@ -69,23 +69,45 @@ python app.py
 
 Then open your browser to `http://localhost:5000`
 
+## Optional: Voice Input Support
+
+For full voice input functionality, install `pyaudio`:
+
+```bash
+# Install system dependency first
+brew install portaudio
+
+# Then install pyaudio
+pip install pyaudio
+```
+
+**Note:** The application works in text-only mode without pyaudio. Voice output (TTS) works using macOS's built-in `say` command.
+
 ## Troubleshooting
 
 ### Audio Issues
 
 - **No microphone access:** Grant microphone permissions in System Preferences
 - **Audio playback issues:** Check system audio settings
+- **pyaudio not found:** Install portaudio via Homebrew first: `brew install portaudio`
 
 ### OpenVoice Issues
 
 - If OpenVoice models are not available, the app will automatically use fallback TTS
 - Check that model paths are correct in `config.yaml` or `.env`
+- OpenVoice is optional - the app works with macOS TTS
 
 ### Dependencies
 
 - If you encounter import errors, ensure all dependencies are installed:
 ```bash
 pip install -r requirements.txt
+```
+
+- For voice input, install optional dependencies:
+```bash
+brew install portaudio
+pip install pyaudio
 ```
 
 ## Notes
