@@ -50,15 +50,22 @@ class WellbeingCoach: ObservableObject {
             object: nil,
             queue: .main
         ) { [weak self] notification in
-            if let text = notification.object as? String {
+            if let dict = notification.object as? [String: String],
+               let text = dict["text"],
+               let context = dict["context"] {
                 Task {
-                    await self?.handleUserMessage(text)
+                    await self?.handleUserMessage(text, context: context)
+                }
+            } else if let text = notification.object as? String {
+                // Fallback for old format
+                Task {
+                    await self?.handleUserMessage(text, context: "")
                 }
             }
         }
     }
     
-    func handleUserMessage(_ text: String) async {
+    func handleUserMessage(_ text: String, context: String = "") async {
         let lowerText = text.lowercased()
         
         // Detect mood
@@ -88,7 +95,15 @@ class WellbeingCoach: ObservableObject {
         var response: String
         let moodContext = "Current mood: \(currentMood.rawValue). \(currentMood.emoji)"
         
-        if let ollamaResponse = await ollamaService.generateResponse(for: text, context: moodContext) {
+        // Combine conversation context with mood context
+        let fullContext: String
+        if !context.isEmpty {
+            fullContext = "\(moodContext)\n\nRecent conversation:\n\(context)"
+        } else {
+            fullContext = moodContext
+        }
+        
+        if let ollamaResponse = await ollamaService.generateResponse(for: text, context: fullContext) {
             response = ollamaResponse
         } else {
             // Fallback to simple responses

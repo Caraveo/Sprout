@@ -30,13 +30,17 @@ class OllamaService {
         - Use gentle, understanding language
         - Offer practical, simple suggestions when helpful
         - Never be clinical or medical - be a friendly companion
+        - Remember previous conversation context and reference it naturally when relevant
         
-        Always respond with empathy and kindness. Be brief and uplifting.
+        Always respond with empathy and kindness. Be brief and uplifting. If the user is continuing a conversation, acknowledge the context naturally.
         """
         
-        let fullPrompt = context.isEmpty 
-            ? "\(systemPrompt)\n\nUser: \(userMessage)\nSprout:"
-            : "\(systemPrompt)\n\nContext: \(context)\n\nUser: \(userMessage)\nSprout:"
+        let fullPrompt: String
+        if context.isEmpty {
+            fullPrompt = "\(systemPrompt)\n\nUser: \(userMessage)\nSprout:"
+        } else {
+            fullPrompt = "\(systemPrompt)\n\n\(context)\n\nUser: \(userMessage)\nSprout:"
+        }
         
         let body: [String: Any] = [
             "model": model,

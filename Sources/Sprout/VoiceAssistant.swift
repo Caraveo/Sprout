@@ -15,6 +15,12 @@ class VoiceAssistant: ObservableObject {
     
     private let openVoiceService = OpenVoiceService()
     
+    // Conversation awareness
+    private var pauseTimer: Timer?
+    private var accumulatedText = ""
+    private let pauseThreshold: TimeInterval = 2.0 // 2 seconds of silence = pause
+    private var lastSpeechTime: Date?
+    
     struct ConversationMessage: Identifiable {
         let id = UUID()
         let text: String
@@ -73,10 +79,21 @@ class VoiceAssistant: ObservableObject {
                 let text = result.bestTranscription.formattedString
                 DispatchQueue.main.async {
                     self.currentMessage = text
+                    // Update accumulated text with latest transcription
+                    self.accumulatedText = text
+                    self.lastSpeechTime = Date()
+                    
+                    // Reset pause timer - user is still speaking
+                    self.resetPauseTimer()
                 }
                 
                 if result.isFinal {
-                    self.processUserMessage(text)
+                    // Final result - process after a pause
+                    DispatchQueue.main.async {
+                        self.accumulatedText = text
+                        self.lastSpeechTime = Date()
+                        self.startPauseTimer()
+                    }
                 }
             }
             
@@ -109,6 +126,9 @@ class VoiceAssistant: ObservableObject {
     }
     
     func stopListening() {
+        pauseTimer?.invalidate()
+        pauseTimer = nil
+        
         audioEngine?.stop()
         audioEngine?.inputNode.removeTap(onBus: 0)
         recognitionRequest?.endAudio()
@@ -121,6 +141,30 @@ class VoiceAssistant: ObservableObject {
         DispatchQueue.main.async {
             self.isListening = false
             self.currentMessage = ""
+            // Process any accumulated text before stopping
+            if !self.accumulatedText.isEmpty {
+                self.processUserMessage(self.accumulatedText)
+                self.accumulatedText = ""
+            }
+        }
+    }
+    
+    private func resetPauseTimer() {
+        pauseTimer?.invalidate()
+        pauseTimer = nil
+    }
+    
+    private func startPauseTimer() {
+        resetPauseTimer()
+        
+        pauseTimer = Timer.scheduledTimer(withTimeInterval: pauseThreshold, repeats: false) { [weak self] _ in
+            guard let self = self else { return }
+            
+            // Pause detected - process accumulated text
+            if !self.accumulatedText.isEmpty {
+                self.processUserMessage(self.accumulatedText)
+                self.accumulatedText = ""
+            }
         }
     }
     
@@ -139,8 +183,11 @@ class VoiceAssistant: ObservableObject {
     }
     
     private func processUserMessage(_ text: String) {
+        let trimmedText = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmedText.isEmpty else { return }
+        
         let userMessage = ConversationMessage(
-            text: text,
+            text: trimmedText,
             isUser: true,
             timestamp: Date(),
             emoji: nil
@@ -150,18 +197,28 @@ class VoiceAssistant: ObservableObject {
             self.conversationHistory.append(userMessage)
         }
         
-        // Process with wellbeing coach
+        // Process with wellbeing coach (with conversation context)
         Task {
-            await processWithWellbeingCoach(text)
+            await processWithWellbeingCoach(trimmedText)
         }
     }
     
     private func processWithWellbeingCoach(_ text: String) async {
-        // This will be called by WellbeingCoach
+        // Pass conversation context to WellbeingCoach
+        let context = getConversationContext()
         NotificationCenter.default.post(
             name: NSNotification.Name("UserMessageReceived"),
-            object: text
+            object: ["text": text, "context": context]
         )
+    }
+    
+    private func getConversationContext() -> String {
+        // Get last 5 messages for context (excluding current one)
+        let recentMessages = conversationHistory.suffix(5)
+        return recentMessages.map { msg in
+            let role = msg.isUser ? "User" : "Sprout"
+            return "\(role): \(msg.text)"
+        }.joined(separator: "\n")
     }
     
     func speak(_ text: String, emoji: String? = nil) async {
