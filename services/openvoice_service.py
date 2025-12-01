@@ -204,7 +204,7 @@ def synthesize():
                 base_speaker_tts.tts(text, tmp_src_path, speaker='default', language='English', speed=1.0)
                 
                 # Step 2: Extract target speaker embedding from reference audio
-                target_se, audio_name = get_se(src_path, tone_color_converter, vad_model=None)
+                target_se, audio_name = get_se(src_path, tone_color_converter, vad=False)
                 
                 # Step 3: Load source speaker embedding (default English speaker)
                 source_se_path = os.path.join(project_root, 'checkpoints', 'base_speakers', 'EN', 'en_default_se.pth')
