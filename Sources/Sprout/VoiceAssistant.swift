@@ -240,6 +240,13 @@ class VoiceAssistant: ObservableObject {
                         self.currentMessage = ""
                     }
                 }
+            } else {
+                // If no text to process, restart listening after a brief pause
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                    if !self.isListening && !self.isSpeaking {
+                        self.startListening()
+                    }
+                }
             }
         }
     }
@@ -313,18 +320,19 @@ class VoiceAssistant: ObservableObject {
     }
     
     func handleTap() {
-        // If speaking, stop speaking first
         if isSpeaking {
+            // If speaking, stop immediately and restart listening
             stopSpeaking()
-            return
-        }
-        
-        // Otherwise, toggle listening on tap
-        if isListening {
-            // Stop listening immediately when tapped
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                if !self.isListening {
+                    self.startListening()
+                }
+            }
+        } else if isListening {
+            // If listening, stop immediately (user wants to interrupt)
             stopListening()
         } else {
-            // Start listening when tapped (if not already listening)
+            // If not speaking or listening, start listening
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
                 self.startListening()
             }
@@ -333,7 +341,15 @@ class VoiceAssistant: ObservableObject {
     
     private func processUserMessage(_ text: String) {
         let trimmedText = text.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmedText.isEmpty else { return }
+        guard !trimmedText.isEmpty else {
+            // If empty, just restart listening
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                if !self.isListening && !self.isSpeaking {
+                    self.startListening()
+                }
+            }
+            return
+        }
         
         let userMessage = ConversationMessage(
             text: trimmedText,
