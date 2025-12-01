@@ -204,6 +204,27 @@ def clone_voice():
         return jsonify({'error': str(e)}), 500
 
 if __name__ == '__main__':
-    print("🌱 Starting Sprout OpenVoice Service on port 6000...")
-    app.run(host='0.0.0.0', port=6000, debug=False)
+    import socket
+    
+    # Try to find an available port starting from 6000
+    port = 6000
+    max_attempts = 10
+    
+    for attempt in range(max_attempts):
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        result = sock.connect_ex(('127.0.0.1', port))
+        sock.close()
+        
+        if result != 0:
+            # Port is available
+            break
+        else:
+            # Port is in use, try next port
+            port += 1
+    
+    if port > 6000:
+        print(f"⚠️  Port 6000 was in use, using port {port} instead")
+    
+    print(f"🌱 Starting Sprout OpenVoice Service on port {port}...")
+    app.run(host='0.0.0.0', port=port, debug=False)
 

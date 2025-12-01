@@ -1,8 +1,13 @@
 import Foundation
 
 class OpenVoiceService {
-    private let baseURL = "http://localhost:6000" // OpenVoice service port
+    private let baseURL: String
     private var session: URLSession
+    
+    init() {
+        // Try port 6000 first, but service will auto-detect available port
+        // The service will use the first available port from 6000-6009
+        self.baseURL = "http://localhost:6000"
     
     init() {
         let config = URLSessionConfiguration.default
