@@ -28,6 +28,7 @@ class VoiceAssistant: ObservableObject {
     
     // TTS control
     private var currentSynthesizer: AVSpeechSynthesizer?
+    private var audioPlayerDelegate: Any? // Keep reference to prevent deallocation
     
     struct ConversationMessage: Identifiable {
         let id = UUID()
@@ -372,11 +373,22 @@ class VoiceAssistant: ObservableObject {
         // Filter emojis from text before speaking (keep original for display)
         let textForSpeech = removeEmojis(from: text)
         
-        // Use OpenVoice service to generate speech
-        if let audioData = await openVoiceService.synthesize(text: textForSpeech) {
-            await playAudio(audioData)
+        // Check if OpenVoice service is available first
+        let serviceAvailable = await openVoiceService.checkServiceAvailable()
+        
+        if serviceAvailable {
+            // Use OpenVoice service to generate speech with Jon's voice
+            print("🎤 Attempting OpenVoice synthesis...")
+            if let audioData = await openVoiceService.synthesize(text: textForSpeech) {
+                print("✅ Using OpenVoice (Jon's voice) for speech")
+                await playAudio(audioData)
+            } else {
+                print("⚠️ OpenVoice synthesis failed, falling back to system TTS")
+                await speakWithSystemTTS(textForSpeech)
+            }
         } else {
-            // Fallback to system TTS (silently - OpenVoice errors are expected if models not loaded)
+            print("⚠️ OpenVoice service not available on port 6000, using system TTS")
+            print("   Make sure to start the service: ./services/start_openvoice.sh")
             await speakWithSystemTTS(textForSpeech)
         }
         
@@ -464,8 +476,58 @@ class VoiceAssistant: ObservableObject {
     }
     
     private func playAudio(_ data: Data) async {
-        // Play audio data using AVAudioPlayer
-        // Implementation depends on OpenVoice service response format
+        // Play audio data from OpenVoice using AVAudioPlayer
+        return await withCheckedContinuation { continuation in
+            do {
+                let audioPlayer = try AVAudioPlayer(data: data)
+                audioPlayer.prepareToPlay()
+                
+                // Use delegate to know when playback finishes
+                class AudioDelegate: NSObject, AVAudioPlayerDelegate {
+                    let continuation: CheckedContinuation<Void, Never>
+                    
+                    init(continuation: CheckedContinuation<Void, Never>) {
+                        self.continuation = continuation
+                    }
+                    
+                    func audioPlayerDidFinishPlaying(_ player: AVAudioPlayer, successfully flag: Bool) {
+                        continuation.resume()
+                    }
+                    
+                    func audioPlayerDecodeErrorDidOccur(_ player: AVAudioPlayer, error: Error?) {
+                        print("❌ OpenVoice: Audio decode error - \(error?.localizedDescription ?? "unknown")")
+                        continuation.resume()
+                    }
+                }
+                
+                let delegate = AudioDelegate(continuation: continuation)
+                audioPlayer.delegate = delegate
+                
+                // Store delegate reference to prevent deallocation
+                // Keep reference in a class property
+                self.audioPlayerDelegate = delegate
+                
+                // Play audio
+                if audioPlayer.play() {
+                    print("✅ OpenVoice: Playing audio (\(data.count) bytes)")
+                } else {
+                    print("❌ OpenVoice: Failed to start playback")
+                    continuation.resume()
+                }
+                
+                // Timeout safety
+                Task {
+                    try? await Task.sleep(nanoseconds: 30_000_000_000) // 30 seconds max
+                    if audioPlayer.isPlaying {
+                        audioPlayer.stop()
+                        continuation.resume()
+                    }
+                }
+            } catch {
+                print("❌ OpenVoice: Failed to create audio player - \(error.localizedDescription)")
+                continuation.resume()
+            }
+        }
     }
 }
 

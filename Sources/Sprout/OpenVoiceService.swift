@@ -5,19 +5,36 @@ class OpenVoiceService {
     private var session: URLSession
     
     init() {
-        // Try port 6000 first, but service will auto-detect available port
-        // The service will use the first available port from 6000-6009
+        // Use port 6000 for OpenVoice service
         self.baseURL = "http://localhost:6000"
-    
-    init() {
+        
         let config = URLSessionConfiguration.default
         config.timeoutIntervalForRequest = 30
         config.timeoutIntervalForResource = 60
         session = URLSession(configuration: config)
     }
     
+    func checkServiceAvailable() async -> Bool {
+        guard let url = URL(string: "\(baseURL)/health") else { return false }
+        
+        var request = URLRequest(url: url)
+        request.httpMethod = "GET"
+        request.timeoutInterval = 5
+        
+        do {
+            let (_, response) = try await session.data(for: request)
+            guard let httpResponse = response as? HTTPURLResponse else { return false }
+            return httpResponse.statusCode == 200
+        } catch {
+            return false
+        }
+    }
+    
     func synthesize(text: String) async -> Data? {
-        guard let url = URL(string: "\(baseURL)/synthesize") else { return nil }
+        guard let url = URL(string: "\(baseURL)/synthesize") else {
+            print("⚠️ OpenVoice: Invalid URL")
+            return nil
+        }
         
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
@@ -32,17 +49,23 @@ class OpenVoiceService {
         request.httpBody = try? JSONSerialization.data(withJSONObject: body)
         
         do {
+            print("🎤 OpenVoice: Requesting synthesis for: \(text.prefix(50))...")
             let (data, response) = try await session.data(for: request)
             
-            guard let httpResponse = response as? HTTPURLResponse,
-                  httpResponse.statusCode == 200 else {
-                // Silently fail - will use system TTS fallback
+            guard let httpResponse = response as? HTTPURLResponse else {
+                print("⚠️ OpenVoice: Invalid response")
                 return nil
             }
             
-            return data
+            if httpResponse.statusCode == 200 {
+                print("✅ OpenVoice: Synthesis successful (\(data.count) bytes)")
+                return data
+            } else {
+                print("⚠️ OpenVoice: Service returned status \(httpResponse.statusCode)")
+                return nil
+            }
         } catch {
-            // Silently fail - will use system TTS fallback
+            print("❌ OpenVoice: Request failed - \(error.localizedDescription)")
             return nil
         }
     }
