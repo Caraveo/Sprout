@@ -379,9 +379,13 @@ class VoiceAssistant: ObservableObject {
         let serviceAvailable = await openVoiceService.checkServiceAvailable()
         
         if serviceAvailable {
+        // Get voice type from settings (use shared instance)
+        let settingsManager = SettingsManager.shared
+        let voiceType = settingsManager.voiceType.openVoiceSpeaker
+            
             // Use OpenVoice service to generate speech with Jon's voice
-            print("🎤 Attempting OpenVoice synthesis...")
-            if let audioData = await openVoiceService.synthesize(text: textForSpeech) {
+            print("🎤 Attempting OpenVoice synthesis... (voice: \(SettingsManager.shared.voiceType.displayName))")
+            if let audioData = await openVoiceService.synthesize(text: textForSpeech, voiceType: voiceType) {
                 print("✅ Using OpenVoice (Jon's voice) for speech")
                 await playAudio(audioData)
             } else {

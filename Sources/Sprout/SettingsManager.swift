@@ -46,6 +46,43 @@ class SettingsManager: ObservableObject {
         }
     }
     
+    @Published var voiceType: VoiceType {
+        didSet {
+            UserDefaults.standard.set(voiceType.rawValue, forKey: "voiceType")
+        }
+    }
+    
+    enum VoiceType: String, CaseIterable, Identifiable {
+        case neutral = "neutral"
+        case enthusiastic = "enthusiastic"
+        case encouraging = "encouraging"
+        case happy = "happy"
+        case sad = "sad"
+        
+        var id: String { self.rawValue }
+        
+        var displayName: String {
+            switch self {
+            case .neutral: return "Neutral"
+            case .enthusiastic: return "Enthusiastic"
+            case .encouraging: return "Encouraging"
+            case .happy: return "Happy"
+            case .sad: return "Sad"
+            }
+        }
+        
+        // Map to OpenVoice speaker styles
+        var openVoiceSpeaker: String {
+            switch self {
+            case .neutral: return "default"
+            case .enthusiastic: return "excited"
+            case .encouraging: return "friendly"
+            case .happy: return "cheerful"
+            case .sad: return "sad"
+            }
+        }
+    }
+    
     enum CloudProvider: String, CaseIterable {
         case openai = "OpenAI"
         case anthropic = "Anthropic"
@@ -88,6 +125,14 @@ class SettingsManager: ObservableObject {
         // Now we can use provider for defaults
         cloudModel = UserDefaults.standard.string(forKey: "cloudModel") ?? provider.defaultModel
         cloudBaseURL = UserDefaults.standard.string(forKey: "cloudBaseURL") ?? provider.defaultBaseURL
+        
+        // Load voice type
+        if let voiceTypeRaw = UserDefaults.standard.string(forKey: "voiceType"),
+           let parsedVoiceType = VoiceType(rawValue: voiceTypeRaw) {
+            voiceType = parsedVoiceType
+        } else {
+            voiceType = .neutral
+        }
     }
     
     func resetToDefaults() {
@@ -98,6 +143,7 @@ class SettingsManager: ObservableObject {
         cloudProvider = .openai
         cloudModel = cloudProvider.defaultModel
         cloudBaseURL = cloudProvider.defaultBaseURL
+        voiceType = .neutral
     }
 }
 

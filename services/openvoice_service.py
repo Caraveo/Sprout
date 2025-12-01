@@ -115,7 +115,7 @@ def synthesize():
         data = request.json
         text = data.get('text', '')
         language = data.get('language', 'en')
-        style = data.get('style', 'default')
+        style = data.get('style', 'default')  # Voice type/emotion: default, excited, friendly, cheerful, sad
         
         if not text:
             return jsonify({'error': 'No text provided'}), 400
@@ -199,9 +199,10 @@ def synthesize():
                 # Use reference voice (Jon's voice)
                 print(f"🎤 Using reference voice: {src_path}")
                 
-                # Step 1: Generate base speech from text
+                # Step 1: Generate base speech from text with selected voice style
                 tmp_src_path = tempfile.mktemp(suffix='.wav')
-                base_speaker_tts.tts(text, tmp_src_path, speaker='default', language='English', speed=1.1)  # 10% faster
+                speaker_style = style if style in ['default', 'excited', 'friendly', 'cheerful', 'sad', 'angry', 'terrified', 'shouting', 'whispering'] else 'default'
+                base_speaker_tts.tts(text, tmp_src_path, speaker=speaker_style, language='English', speed=1.1)  # 10% faster
                 
                 # Step 2: Extract target speaker embedding from reference audio
                 target_se, audio_name = get_se(src_path, tone_color_converter, vad=True)
