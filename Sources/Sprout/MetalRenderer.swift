@@ -206,6 +206,28 @@ class MetalRenderer: NSObject, MTKViewDelegate {
             float2 coord = (uv - 0.5) * 2.0;
             coord.x *= resolution.x / resolution.y;
             
+            // Position orb at bottom of window (offset Y downward)
+            float baseYOffset = -0.6; // Move to bottom
+            
+            // Smooth vertical movement based on audio - rises when reacting, then falls
+            // Use a smooth bounce effect that responds to audio intensity
+            float audioReaction = audioIntensity * 0.8 + audioLevel * 0.4;
+            
+            // Create smooth up-and-down movement with easing
+            // When audio is detected, orb rises smoothly, then falls back
+            float bouncePhase = time * 1.2; // Slower, more natural movement
+            float bounceAmount = sin(bouncePhase) * 0.5 + 0.5; // 0 to 1 smooth cycle
+            
+            // Only bounce when there's audio activity
+            float verticalOffset = baseYOffset + (bounceAmount * audioReaction * 0.4);
+            
+            // Smooth transition - use easing for natural movement
+            float smoothBounce = smoothstep(0.0, 1.0, bounceAmount);
+            verticalOffset = baseYOffset + (smoothBounce * audioReaction * 0.35);
+            
+            // Apply vertical offset
+            coord.y += verticalOffset;
+            
             // Scale down the orb to fit better in the window
             coord /= 0.32;
             
