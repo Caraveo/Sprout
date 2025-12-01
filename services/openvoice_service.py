@@ -35,24 +35,17 @@ def load_openvoice():
     try:
         print("🔧 Loading OpenVoice models...")
         
-        # Import se_extractor (it's a module, not a function)
-        try:
-            from openvoice import se_extractor
-        except ImportError:
-            # Try direct import
-            import sys
-            openvoice_path = os.path.join(os.path.dirname(__file__), '..', 'openvoice')
+        # Import OpenVoice modules
+        # Add openvoice to path first
+        openvoice_path = os.path.join(os.path.dirname(__file__), '..', 'openvoice')
+        if openvoice_path not in sys.path:
             sys.path.insert(0, openvoice_path)
-            from openvoice import se_extractor
         
-        try:
-            from openvoice.api import BaseSpeakerTTS, ToneColorConverter
-        except ImportError:
-            # Try alternative import
-            import sys
-            openvoice_path = os.path.join(os.path.dirname(__file__), '..', 'openvoice')
-            sys.path.insert(0, openvoice_path)
-            from openvoice.api import BaseSpeakerTTS, ToneColorConverter
+        # Import se_extractor
+        from openvoice.se_extractor import get_se
+        
+        # Import API classes
+        from openvoice.api import BaseSpeakerTTS, ToneColorConverter
         
         # MeloTTS is optional - don't fail if not available
         try:
@@ -99,7 +92,7 @@ def load_openvoice():
             'base_speaker_tts': base_speaker_tts,
             'tone_color_converter': tone_color_converter,
             'device': device,
-            'se_extractor': se_extractor
+            'get_se': get_se  # Store the get_se function
         }
         
         print("✅ OpenVoice models loaded successfully!")
@@ -161,7 +154,7 @@ def synthesize():
                     tts_model.tts_to_file(text, speaker_id, tmp_src_path, speed=speed)
                     
                     # Extract embeddings from generated audio
-                    source_se, _ = se_extractor.get_se(tmp_src_path, tone_color_converter, vad_model=None)
+                    source_se, _ = get_se(tmp_src_path, tone_color_converter, vad_model=None)
                     target_se = source_se  # Use same embedding if no reference
                     
                     # Convert tone (will just pass through since src_se == tgt_se)
@@ -211,14 +204,14 @@ def synthesize():
                 base_speaker_tts.tts(text, tmp_src_path, speaker='default', language='English', speed=1.0)
                 
                 # Step 2: Extract target speaker embedding from reference audio
-                target_se, audio_name = se_extractor.get_se(src_path, tone_color_converter, vad_model=None)
+                target_se, audio_name = get_se(src_path, tone_color_converter, vad_model=None)
                 
                 # Step 3: Load source speaker embedding (default English speaker)
                 source_se_path = os.path.join(project_root, 'checkpoints', 'base_speakers', 'EN', 'en_default_se.pth')
                 if not os.path.exists(source_se_path):
                     # Fallback: try to extract from generated audio (less ideal)
                     print("⚠️  en_default_se.pth not found, extracting from generated audio")
-                    source_se, _ = se_extractor.get_se(tmp_src_path, tone_color_converter, vad_model=None)
+                    source_se, _ = get_se(tmp_src_path, tone_color_converter, vad_model=None)
                 else:
                     import torch
                     source_se = torch.load(source_se_path, map_location=device)
