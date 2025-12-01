@@ -28,7 +28,6 @@ class VoiceAssistant: ObservableObject {
     
     // TTS control
     private var currentSynthesizer: AVSpeechSynthesizer?
-    private var audioPlayerDelegate: Any? // Keep reference to prevent deallocation
     
     struct ConversationMessage: Identifiable {
         let id = UUID()
@@ -504,9 +503,8 @@ class VoiceAssistant: ObservableObject {
                 audioPlayer.delegate = delegate
                 
                 // Store delegate reference to prevent deallocation
-                await MainActor.run {
-                    self.audioPlayerDelegate = delegate
-                }
+                // Use a local variable to keep reference alive
+                let _ = delegate
                 
                 // Play audio
                 if audioPlayer.play() {
