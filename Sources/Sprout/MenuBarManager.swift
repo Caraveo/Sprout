@@ -23,13 +23,13 @@ class MenuBarManager: ObservableObject {
         
         // Create popover with menu content
         let popover = NSPopover()
-        popover.contentSize = NSSize(width: 300, height: 450)
+        popover.contentSize = NSSize(width: 320, height: 500)
         popover.behavior = .transient
         popover.contentViewController = NSHostingController(
             rootView: MenuBarView()
                 .environmentObject(voiceAssistant)
                 .environmentObject(wellbeingCoach)
-                .frame(width: 300, height: 450)
+                .frame(width: 320, height: 500)
         )
         self.popover = popover
     }
@@ -62,7 +62,7 @@ struct MenuBarView: View {
     
     var body: some View {
         ScrollView {
-            VStack(spacing: 16) {
+            VStack(spacing: 24) {
                 // Header
                 HStack {
                     Text("🌱 Sprout")
@@ -70,23 +70,24 @@ struct MenuBarView: View {
                         .foregroundColor(.primary)
                     Spacer()
                 }
-                .padding(.top, 12)
+                .padding(.top, 16)
                 .padding(.horizontal, 16)
                 
                 Divider()
+                    .padding(.vertical, 4)
                 
                 // Mood section
-                VStack(alignment: .leading, spacing: 12) {
+                VStack(alignment: .leading, spacing: 16) {
                     Text("Current Mood")
                         .font(.system(size: 14, weight: .semibold))
                         .foregroundColor(.primary)
                     
-                    HStack(spacing: 12) {
+                    HStack(spacing: 16) {
                         ForEach(WellbeingCoach.Mood.allCases, id: \.self) { mood in
                             Button(action: {
                                 wellbeingCoach.currentMood = mood
                             }) {
-                                VStack(spacing: 4) {
+                                VStack(spacing: 6) {
                                     Text(mood.emoji)
                                         .font(.system(size: 24))
                                     Text(mood.rawValue)
@@ -102,16 +103,18 @@ struct MenuBarView: View {
                     }
                 }
                 .padding(.horizontal, 16)
+                .padding(.vertical, 4)
                 
                 Divider()
+                    .padding(.vertical, 4)
                 
                 // Quick actions
-                VStack(alignment: .leading, spacing: 12) {
+                VStack(alignment: .leading, spacing: 16) {
                     Text("Quick Actions")
                         .font(.system(size: 14, weight: .semibold))
                         .foregroundColor(.primary)
                     
-                    VStack(spacing: 8) {
+                    VStack(spacing: 12) {
                         MenuBarActionButton(
                             title: voiceAssistant.isListening ? "Stop Listening" : "Start Listening",
                             emoji: voiceAssistant.isListening ? "⏸️" : "🎤",
@@ -146,17 +149,19 @@ struct MenuBarView: View {
                     }
                 }
                 .padding(.horizontal, 16)
+                .padding(.vertical, 4)
                 
                 Divider()
+                    .padding(.vertical, 4)
                 
                 // Progress section
-                VStack(alignment: .leading, spacing: 12) {
+                VStack(alignment: .leading, spacing: 16) {
                     Text("Your Progress")
                         .font(.system(size: 14, weight: .semibold))
                         .foregroundColor(.primary)
                     
-                    HStack(spacing: 20) {
-                        VStack(alignment: .leading, spacing: 4) {
+                    HStack(spacing: 24) {
+                        VStack(alignment: .leading, spacing: 6) {
                             Text("\(wellbeingCoach.dailyStreak)")
                                 .font(.system(size: 24, weight: .bold))
                                 .foregroundColor(.primary)
@@ -167,7 +172,7 @@ struct MenuBarView: View {
                         
                         Spacer()
                         
-                        VStack(alignment: .trailing, spacing: 4) {
+                        VStack(alignment: .trailing, spacing: 6) {
                             Text("\(wellbeingCoach.weeklyProgress.values.reduce(0, +))")
                                 .font(.system(size: 24, weight: .bold))
                                 .foregroundColor(.primary)
@@ -178,9 +183,11 @@ struct MenuBarView: View {
                     }
                 }
                 .padding(.horizontal, 16)
+                .padding(.vertical, 4)
                 
                 // View full log button
                 Divider()
+                    .padding(.vertical, 4)
                 
                 Button(action: {
                     // Open conversation log in a new window
@@ -208,35 +215,40 @@ struct MenuBarView: View {
                             .font(.system(size: 12))
                             .foregroundColor(.secondary)
                     }
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 10)
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 12)
                     .background(Color.accentColor.opacity(0.1))
                     .cornerRadius(8)
                 }
                 .buttonStyle(PlainButtonStyle())
                 .padding(.horizontal, 16)
+                .padding(.vertical, 4)
                 
                 // Recent conversations preview
                 if !voiceAssistant.conversationHistory.isEmpty {
                     Divider()
+                        .padding(.vertical, 4)
                     
-                    VStack(alignment: .leading, spacing: 12) {
+                    VStack(alignment: .leading, spacing: 16) {
                         Text("Recent")
                             .font(.system(size: 14, weight: .semibold))
                             .foregroundColor(.primary)
                         
-                        ForEach(voiceAssistant.conversationHistory.suffix(2)) { message in
-                            MenuBarConversationBubble(message: message)
+                        VStack(spacing: 12) {
+                            ForEach(voiceAssistant.conversationHistory.suffix(2)) { message in
+                                MenuBarConversationBubble(message: message)
+                            }
                         }
                     }
                     .padding(.horizontal, 16)
+                    .padding(.vertical, 4)
                 }
                 
                 Spacer()
             }
-            .padding(.bottom, 12)
+            .padding(.bottom, 16)
         }
-        .frame(width: 300, height: 450)
+        .frame(width: 320, height: 500)
     }
 }
 
@@ -248,16 +260,16 @@ struct MenuBarActionButton: View {
     
     var body: some View {
         Button(action: action) {
-            HStack(spacing: 8) {
+            HStack(spacing: 12) {
                 Text(emoji)
-                    .font(.system(size: 18))
+                    .font(.system(size: 20))
                 Text(title)
                     .font(.system(size: 13, weight: .medium))
                     .foregroundColor(.primary)
                 Spacer()
             }
-            .padding(.horizontal, 12)
-            .padding(.vertical, 10)
+            .padding(.horizontal, 14)
+            .padding(.vertical, 12)
             .background(color.opacity(0.2))
             .cornerRadius(8)
         }
@@ -270,21 +282,21 @@ struct MenuBarConversationBubble: View {
     @State private var showAnalysis = false
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            HStack(alignment: .top, spacing: 8) {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack(alignment: .top, spacing: 10) {
                 if let emoji = message.emoji {
                     Text(emoji)
-                        .font(.system(size: 14))
+                        .font(.system(size: 16))
                 }
                 
-                VStack(alignment: .leading, spacing: 2) {
+                VStack(alignment: .leading, spacing: 4) {
                     Text(message.text)
-                        .font(.system(size: 11))
+                        .font(.system(size: 12))
                         .foregroundColor(.primary)
                         .lineLimit(2)
                     
                     Text(message.timestamp, style: .time)
-                        .font(.system(size: 9))
+                        .font(.system(size: 10))
                         .foregroundColor(.secondary)
                 }
                 
@@ -298,27 +310,28 @@ struct MenuBarConversationBubble: View {
                 }) {
                     HStack {
                         Text("💭 Analysis")
-                            .font(.system(size: 9, weight: .medium))
+                            .font(.system(size: 10, weight: .medium))
                             .foregroundColor(.secondary)
                         Image(systemName: showAnalysis ? "chevron.up" : "chevron.down")
-                            .font(.system(size: 8))
+                            .font(.system(size: 9))
                             .foregroundColor(.secondary)
                     }
                 }
                 .buttonStyle(PlainButtonStyle())
+                .padding(.top, 2)
                 
                 if showAnalysis {
                     Text(analysis)
-                        .font(.system(size: 9))
+                        .font(.system(size: 10))
                         .foregroundColor(.secondary)
                         .italic()
-                        .padding(.top, 2)
+                        .padding(.top, 4)
                 }
             }
         }
-        .padding(8)
+        .padding(12)
         .background(message.isUser ? Color.blue.opacity(0.2) : Color.green.opacity(0.2))
-        .cornerRadius(6)
+        .cornerRadius(8)
     }
 }
 
