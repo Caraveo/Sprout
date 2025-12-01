@@ -42,17 +42,6 @@ class VoiceAssistant: ObservableObject {
         speechRecognizer = SFSpeechRecognizer(locale: Locale(identifier: "en-US"))
         requestSpeechAuthorization()
         setupAnalysisListener()
-        setupCancelListener()
-    }
-    
-    private func setupCancelListener() {
-        NotificationCenter.default.addObserver(
-            forName: NSNotification.Name("CancelTranscription"),
-            object: nil,
-            queue: .main
-        ) { [weak self] _ in
-            self?.cancelTranscription()
-        }
     }
     
     private func setupAnalysisListener() {
@@ -336,21 +325,6 @@ class VoiceAssistant: ObservableObject {
         }
     }
     
-    func cancelTranscription() {
-        // Clear current transcription message
-        DispatchQueue.main.async {
-            self.currentMessage = ""
-            self.accumulatedText = ""
-        }
-        
-        // Stop listening if active
-        if isListening {
-            stopListening()
-        }
-        
-        print("⌨️ Transcription cancelled by Esc key")
-    }
-    
     private func processUserMessage(_ text: String) {
         let trimmedText = text.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmedText.isEmpty else { return }
@@ -441,31 +415,8 @@ class VoiceAssistant: ObservableObject {
     
     private func speakWithSystemTTS(_ text: String) async {
         let utterance = AVSpeechUtterance(string: text)
-        
-        // Try to find a cute boy voice - use enhanced voices or adjust parameters
-        // Try different voice options for a cute boy sound
-        let preferredVoices = [
-            "com.apple.speech.synthesis.voice.Alex",  // Male voice
-            "com.apple.speech.synthesis.voice.Tom",   // Male voice
-            "com.apple.speech.synthesis.voice.Samantha", // Can be adjusted
-        ]
-        
-        // Try to find an available voice
-        var selectedVoice: AVSpeechSynthesisVoice?
-        for voiceId in preferredVoices {
-            if let voice = AVSpeechSynthesisVoice(identifier: voiceId) {
-                selectedVoice = voice
-                break
-            }
-        }
-        
-        // Fallback to default if none found
-        utterance.voice = selectedVoice ?? AVSpeechSynthesisVoice(language: "en-US")
-        
-        // Adjust parameters for cute boy voice: faster rate, higher pitch
-        utterance.rate = 0.55  // Slightly faster for youthful energy
-        utterance.pitchMultiplier = 1.15  // Higher pitch for cute boy sound
-        utterance.volume = 1.0
+        utterance.voice = AVSpeechSynthesisVoice(language: "en-US")
+        utterance.rate = 0.5
         
         let synthesizer = AVSpeechSynthesizer()
         currentSynthesizer = synthesizer

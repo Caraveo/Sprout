@@ -70,8 +70,6 @@ struct WindowAccessor: NSViewRepresentable {
         window.titlebarAppearsTransparent = true
         window.titleVisibility = .hidden
         window.isMovableByWindowBackground = true
-        window.acceptsMouseMovedEvents = true
-        window.makeFirstResponder(window.contentView)
         window.contentView?.wantsLayer = true
         window.contentView?.layer?.masksToBounds = false
         

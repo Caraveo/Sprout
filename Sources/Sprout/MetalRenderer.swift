@@ -206,8 +206,8 @@ class MetalRenderer: NSObject, MTKViewDelegate {
             float2 coord = (uv - 0.5) * 2.0;
             coord.x *= resolution.x / resolution.y;
             
-            // Scale down the orb to fit better in the window (20% smaller)
-            coord /= 0.4;
+            // Scale down the orb to fit better in the window
+            coord /= 0.32;
             
             float angle = atan2(coord.y, coord.x);
             float dist = length(coord);
@@ -443,37 +443,12 @@ class MetalRenderer: NSObject, MTKViewDelegate {
                     color3 = float3(1.0, 0.7, 0.3); // Gold
                     color4 = float3(1.0, 0.8, 0.1); // Amber
                 } else {
-                    // Low freq + Low volume = Dynamic color cycling (not just yellow!)
-                    // Cycle through a variety of colors based on time
-                    float colorCycle = fract(time * 0.15); // Slow color cycle
+                    // Low freq + Low volume = YELLOW/AMBER gradient
                     float variation = sin(time * 0.8 + audioIntensity * 2.0) * 0.3;
-                    
-                    // Create a rotating color palette that cycles through different hues
-                    if (colorCycle < 0.25) {
-                        // Blue/Cyan phase
-                        color1 = float3(0.2, 0.6, 1.0); // Blue
-                        color2 = float3(0.0, 0.8, 1.0); // Cyan
-                        color3 = float3(0.4, 0.8, 1.0); // Sky blue
-                        color4 = float3(0.0, 0.9, 0.9); // Teal
-                    } else if (colorCycle < 0.5) {
-                        // Green/Mint phase
-                        color1 = float3(0.0, 1.0, 0.6); // Green
-                        color2 = float3(0.3, 1.0, 0.7); // Mint
-                        color3 = float3(0.0, 0.9, 0.9); // Teal
-                        color4 = float3(0.2, 1.0, 0.8); // Aqua green
-                    } else if (colorCycle < 0.75) {
-                        // Purple/Pink phase
-                        color1 = float3(0.8, 0.2, 1.0); // Purple
-                        color2 = float3(1.0, 0.3, 0.9); // Pink
-                        color3 = float3(0.9, 0.0, 1.0); // Magenta
-                        color4 = float3(1.0, 0.5, 0.9); // Light pink
-                    } else {
-                        // Warm tones (but not just yellow)
-                        color1 = float3(1.0, 0.4, 0.6); // Coral
-                        color2 = float3(1.0, 0.6, 0.4); // Peach
-                        color3 = float3(1.0, 0.5, 0.3); // Salmon
-                        color4 = float3(1.0, 0.7, 0.5); // Light coral
-                    }
+                    color1 = mix(float3(1.0, 0.7, 0.1), float3(1.0, 0.5, 0.0), 0.5 + variation);
+                    color2 = float3(1.0, 0.8, 0.2); // Light yellow
+                    color3 = float3(1.0, 0.6, 0.0); // Orange-yellow
+                    color4 = float3(1.0, 0.9, 0.3); // Pale yellow
                 }
             }
             
@@ -496,13 +471,11 @@ class MetalRenderer: NSObject, MTKViewDelegate {
             dominantColor = mix(centerColor, edgeColor, radialGradient * 0.4) * 0.6 + dominantColor * 0.4;
             
             // Cycle through color spectrum after choosing dominant color
-            // Make it more active even when idle to avoid getting stuck in yellow
             float reactiveSpeed = 1.0 + audioIntensity * 2.0; // Speed up when reactive
-            float baseSpeed = 0.8; // Base speed even when idle (faster than before)
-            float spectrumPhase = time * (baseSpeed + reactiveSpeed * 0.6) + audioIntensity * 1.2;
+            float spectrumPhase = time * (0.6 + reactiveSpeed * 0.6) + audioIntensity * 1.2;
             
             // Create full spectrum cycle (HSV to RGB)
-            float hue = fract(spectrumPhase * 0.35); // Cycle through 0-1 (full spectrum) - slightly faster
+            float hue = fract(spectrumPhase * 0.3); // Cycle through 0-1 (full spectrum)
             float3 spectrumColor = float3(0.0);
             
             // HSV to RGB conversion for full spectrum

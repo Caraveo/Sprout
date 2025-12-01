@@ -21,9 +21,7 @@ class OpenVoiceService {
         let body: [String: Any] = [
             "text": text,
             "language": "en",
-            "style": "cute_boy",  // Request cute boy voice style
-            "pitch": 1.15,  // Higher pitch for cute boy voice
-            "speed": 1.1    // Slightly faster for youthful energy
+            "style": "default"
         ]
         
         request.httpBody = try? JSONSerialization.data(withJSONObject: body)
