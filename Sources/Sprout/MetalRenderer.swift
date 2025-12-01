@@ -210,20 +210,38 @@ class MetalRenderer: NSObject, MTKViewDelegate {
             float baseYOffset = -0.65; // Move to bottom of window
             
             // Smooth vertical movement that reacts to audio
-            // When audio is detected, orb rises smoothly, then falls back naturally
+            // When audio is detected, orb rises FAST, then falls back naturally (slower)
             float audioReaction = audioIntensity * 0.9 + audioLevel * 0.5;
             
-            // Create smooth bounce that responds to audio in real-time
-            // Use a combination of time-based cycle and audio-reactive response
-            float bounceSpeed = 1.5 + audioReaction * 0.8; // Faster when more reactive
-            float bouncePhase = time * bounceSpeed;
+            // Create asymmetric bounce: FAST up, SLOW down
+            // Use separate speeds for upward and downward movement
+            float upSpeed = 3.5 + audioReaction * 1.5; // Much faster upward movement
+            float downSpeed = 1.2; // Slower, natural downward movement (fixed)
             
-            // Smooth sine wave for natural up-and-down movement
-            // When audio is high, it bounces more; when low, it settles at bottom
-            float bounceAmount = sin(bouncePhase) * 0.5 + 0.5; // 0 to 1
+            // Calculate phase with different speeds for up vs down
+            float bouncePhase = time;
+            float sineWave = sin(bouncePhase * (upSpeed + downSpeed) * 0.5) * 0.5 + 0.5; // 0 to 1
+            
+            // Create asymmetric movement: fast rise, slow fall
+            // Use power curve to make upward movement faster
+            float asymmetricBounce;
+            if (sineWave < 0.5) {
+                // Upward phase (0 to 0.5) - make it MUCH faster
+                // Use power curve to accelerate upward movement
+                float normalizedUp = sineWave / 0.5; // 0 to 1
+                asymmetricBounce = pow(normalizedUp, 0.4) * 0.5; // Fast acceleration (0 to 0.5)
+            } else {
+                // Downward phase (0.5 to 1.0) - keep it slower
+                // Use gentler curve for natural fall
+                float normalizedDown = (sineWave - 0.5) / 0.5; // 0 to 1
+                asymmetricBounce = 0.5 + pow(normalizedDown, 1.2) * 0.5; // Slower, natural fall (0.5 to 1.0)
+            }
+            
+            // Clamp to 0-1 range
+            asymmetricBounce = clamp(asymmetricBounce, 0.0, 1.0);
             
             // Apply easing for smooth, natural movement
-            float easedBounce = smoothstep(0.0, 1.0, bounceAmount);
+            float easedBounce = smoothstep(0.0, 1.0, asymmetricBounce);
             
             // Vertical offset: base position + bounce amount scaled by audio reaction
             // Maximum rise is about 0.4 units when fully reactive
