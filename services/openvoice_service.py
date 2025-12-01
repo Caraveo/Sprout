@@ -29,9 +29,25 @@ def load_openvoice():
         return
     
     try:
-        from openvoice import se_extractor
-        from openvoice.api import BaseSpeakerTTS, ToneColorConverter
-        from melo.api import TTS
+        # Try different import paths
+        try:
+            from openvoice import se_extractor
+        except ImportError:
+            from openvoice.se_extractor import se_extractor
+        
+        try:
+            from openvoice.api import BaseSpeakerTTS, ToneColorConverter
+        except ImportError:
+            # Try alternative import
+            import sys
+            sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'openvoice'))
+            from openvoice.api import BaseSpeakerTTS, ToneColorConverter
+        
+        # MeloTTS is optional for V2
+        try:
+            from melo.api import TTS
+        except ImportError:
+            TTS = None
         
         # Load models
         ckpt_base = 'checkpoints/base_speakers/EN'
