@@ -23,12 +23,15 @@ class MenuBarManager: ObservableObject {
         
         // Create popover with menu content
         let popover = NSPopover()
-        popover.contentSize = NSSize(width: 300, height: 400)
+        popover.contentSize = NSSize(width: 300, height: 450)
         popover.behavior = .transient
         popover.contentViewController = NSHostingController(
-            rootView: MenuBarView()
-                .environmentObject(voiceAssistant)
-                .environmentObject(wellbeingCoach)
+            rootView: NavigationView {
+                MenuBarView()
+                    .environmentObject(voiceAssistant)
+                    .environmentObject(wellbeingCoach)
+            }
+            .frame(width: 300, height: 450)
         )
         self.popover = popover
     }
@@ -178,7 +181,29 @@ struct MenuBarView: View {
                 }
                 .padding(.horizontal, 16)
                 
-                // Recent conversations
+                // View full log button
+                Divider()
+                
+                NavigationLink(destination: ConversationLogView().environmentObject(voiceAssistant)) {
+                    HStack {
+                        Image(systemName: "list.bullet.rectangle")
+                            .font(.system(size: 14))
+                        Text("View Full Conversation Log")
+                            .font(.system(size: 13, weight: .medium))
+                        Spacer()
+                        Image(systemName: "chevron.right")
+                            .font(.system(size: 10))
+                            .foregroundColor(.secondary)
+                    }
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 10)
+                    .background(Color.accentColor.opacity(0.1))
+                    .cornerRadius(8)
+                }
+                .buttonStyle(PlainButtonStyle())
+                .padding(.horizontal, 16)
+                
+                // Recent conversations preview
                 if !voiceAssistant.conversationHistory.isEmpty {
                     Divider()
                     
@@ -187,7 +212,7 @@ struct MenuBarView: View {
                             .font(.system(size: 14, weight: .semibold))
                             .foregroundColor(.primary)
                         
-                        ForEach(voiceAssistant.conversationHistory.suffix(3)) { message in
+                        ForEach(voiceAssistant.conversationHistory.suffix(2)) { message in
                             MenuBarConversationBubble(message: message)
                         }
                     }
@@ -198,7 +223,7 @@ struct MenuBarView: View {
             }
             .padding(.bottom, 12)
         }
-        .frame(width: 300, height: 400)
+        .frame(width: 300, height: 450)
     }
 }
 
@@ -229,26 +254,54 @@ struct MenuBarActionButton: View {
 
 struct MenuBarConversationBubble: View {
     let message: VoiceAssistant.ConversationMessage
+    @State private var showAnalysis = false
     
     var body: some View {
-        HStack(alignment: .top, spacing: 8) {
-            if let emoji = message.emoji {
-                Text(emoji)
-                    .font(.system(size: 14))
-            }
-            
-            VStack(alignment: .leading, spacing: 2) {
-                Text(message.text)
-                    .font(.system(size: 11))
-                    .foregroundColor(.primary)
-                    .lineLimit(2)
+        VStack(alignment: .leading, spacing: 4) {
+            HStack(alignment: .top, spacing: 8) {
+                if let emoji = message.emoji {
+                    Text(emoji)
+                        .font(.system(size: 14))
+                }
                 
-                Text(message.timestamp, style: .time)
-                    .font(.system(size: 9))
-                    .foregroundColor(.secondary)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(message.text)
+                        .font(.system(size: 11))
+                        .foregroundColor(.primary)
+                        .lineLimit(2)
+                    
+                    Text(message.timestamp, style: .time)
+                        .font(.system(size: 9))
+                        .foregroundColor(.secondary)
+                }
+                
+                Spacer()
             }
             
-            Spacer()
+            // Analysis preview
+            if let analysis = message.analysis, !analysis.isEmpty {
+                Button(action: {
+                    showAnalysis.toggle()
+                }) {
+                    HStack {
+                        Text("💭 Analysis")
+                            .font(.system(size: 9, weight: .medium))
+                            .foregroundColor(.secondary)
+                        Image(systemName: showAnalysis ? "chevron.up" : "chevron.down")
+                            .font(.system(size: 8))
+                            .foregroundColor(.secondary)
+                    }
+                }
+                .buttonStyle(PlainButtonStyle())
+                
+                if showAnalysis {
+                    Text(analysis)
+                        .font(.system(size: 9))
+                        .foregroundColor(.secondary)
+                        .italic()
+                        .padding(.top, 2)
+                }
+            }
         }
         .padding(8)
         .background(message.isUser ? Color.blue.opacity(0.2) : Color.green.opacity(0.2))

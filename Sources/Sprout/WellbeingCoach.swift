@@ -93,6 +93,7 @@ class WellbeingCoach: ObservableObject {
         
         // Try Ollama first, fallback to simple responses
         var response: String
+        let analysis: String? = nil // Will be set via notification
         let moodContext = "Current mood: \(currentMood.rawValue). \(currentMood.emoji)"
         
         // Combine conversation context with mood context
@@ -105,6 +106,7 @@ class WellbeingCoach: ObservableObject {
         
         if let ollamaResponse = await ollamaService.generateResponse(for: text, context: fullContext) {
             response = ollamaResponse
+            // Analysis will be set via notification from OllamaService
         } else {
             // Fallback to simple responses
             response = generateResponse(for: text)
@@ -112,7 +114,10 @@ class WellbeingCoach: ObservableObject {
         
         let emoji = getEmojiForResponse(response)
         
-        await globalVoiceAssistant?.speak(response, emoji: emoji)
+        // Wait a moment for analysis to be parsed
+        try? await Task.sleep(nanoseconds: 500_000_000) // 0.5 seconds
+        
+        await globalVoiceAssistant?.speak(response, emoji: emoji, analysis: analysis)
         
         // Show emoji
         NotificationCenter.default.post(

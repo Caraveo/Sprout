@@ -25,14 +25,19 @@ class OllamaService {
         let systemPrompt = """
         You are Sprout, a kind and supportive mind wellbeing assistant. Your role is to:
         - Be warm, positive, and encouraging
-        - Keep responses SHORT (1-2 sentences max)
+        - Keep responses SHORT (randomly 1, 2, 3, or 4 sentences - choose randomly each time)
         - Focus on mind wellbeing and emotional support
         - Use gentle, understanding language
         - Offer practical, simple suggestions when helpful
         - Never be clinical or medical - be a friendly companion
         - Remember previous conversation context and reference it naturally when relevant
         
-        Always respond with empathy and kindness. Be brief and uplifting. If the user is continuing a conversation, acknowledge the context naturally.
+        CRITICAL: You MUST respond in this exact format:
+        answer: [your response here - 1 to 4 sentences randomly chosen]
+        
+        analysis: [brief analysis of the conversation, user's emotional state, and what they might need - 1-2 sentences]
+        
+        Always respond with empathy and kindness. Be brief and uplifting.
         """
         
         let fullPrompt: String
@@ -49,8 +54,8 @@ class OllamaService {
             "options": [
                 "temperature": 0.7,
                 "top_p": 0.9,
-                "max_tokens": 100, // Keep responses short
-                "stop": ["\n\n", "User:", "Sprout:"]
+                "max_tokens": 200, // Increased for answer + analysis
+                "stop": ["User:", "Sprout:"]
             ]
         ]
         
@@ -67,19 +72,8 @@ class OllamaService {
             
             if let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
                let responseText = json["response"] as? String {
-                // Clean up the response - remove any extra formatting
-                let cleaned = responseText
-                    .trimmingCharacters(in: .whitespacesAndNewlines)
-                    .replacingOccurrences(of: "\n", with: " ")
-                    .replacingOccurrences(of: "  ", with: " ")
-                
-                // Ensure it's not too long (max 200 characters)
-                if cleaned.count > 200 {
-                    let truncated = String(cleaned.prefix(197)) + "..."
-                    return truncated
-                }
-                
-                return cleaned.isEmpty ? nil : cleaned
+                // Parse the response format: "answer: ...\n\nanalysis: ..."
+                return parseResponse(responseText)
             }
             
             return nil
@@ -103,6 +97,85 @@ class OllamaService {
         } catch {
             return false
         }
+    }
+    
+    private func parseResponse(_ text: String) -> String? {
+        // Parse format: "answer: ...\n\nanalysis: ..."
+        let lines = text.components(separatedBy: "\n")
+        var answer: String?
+        var analysis: String?
+        
+        var currentSection: String?
+        var currentContent: [String] = []
+        
+        for line in lines {
+            let trimmed = line.trimmingCharacters(in: .whitespacesAndNewlines)
+            if trimmed.isEmpty {
+                if let section = currentSection, !currentContent.isEmpty {
+                    if section == "answer" {
+                        answer = currentContent.joined(separator: " ")
+                    } else if section == "analysis" {
+                        analysis = currentContent.joined(separator: " ")
+                    }
+                    currentContent = []
+                }
+                continue
+            }
+            
+            if trimmed.lowercased().hasPrefix("answer:") {
+                if let section = currentSection, !currentContent.isEmpty {
+                    if section == "answer" {
+                        answer = currentContent.joined(separator: " ")
+                    } else if section == "analysis" {
+                        analysis = currentContent.joined(separator: " ")
+                    }
+                }
+                currentSection = "answer"
+                let content = String(trimmed.dropFirst("answer:".count)).trimmingCharacters(in: .whitespacesAndNewlines)
+                if !content.isEmpty {
+                    currentContent = [content]
+                } else {
+                    currentContent = []
+                }
+            } else if trimmed.lowercased().hasPrefix("analysis:") {
+                if let section = currentSection, !currentContent.isEmpty {
+                    if section == "answer" {
+                        answer = currentContent.joined(separator: " ")
+                    } else if section == "analysis" {
+                        analysis = currentContent.joined(separator: " ")
+                    }
+                }
+                currentSection = "analysis"
+                let content = String(trimmed.dropFirst("analysis:".count)).trimmingCharacters(in: .whitespacesAndNewlines)
+                if !content.isEmpty {
+                    currentContent = [content]
+                } else {
+                    currentContent = []
+                }
+            } else if let section = currentSection {
+                currentContent.append(trimmed)
+            }
+        }
+        
+        // Handle remaining content
+        if let section = currentSection, !currentContent.isEmpty {
+            if section == "answer" {
+                answer = currentContent.joined(separator: " ")
+            } else if section == "analysis" {
+                analysis = currentContent.joined(separator: " ")
+            }
+        }
+        
+        // Store analysis for later retrieval
+        if let analysis = analysis {
+            NotificationCenter.default.post(
+                name: NSNotification.Name("ConversationAnalysis"),
+                object: ["answer": answer ?? "", "analysis": analysis]
+            )
+        }
+        
+        // Return just the answer for speaking
+        return answer?.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 }
 

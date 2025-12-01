@@ -18,10 +18,13 @@ class VoiceAssistant: ObservableObject {
     // Conversation awareness
     private var pauseTimer: Timer?
     private var silenceTimer: Timer?
+    private var noSpeechTimer: Timer?
     private var accumulatedText = ""
     private let pauseThreshold: TimeInterval = 2.0 // 2 seconds of silence = pause and process
     private let silenceStopThreshold: TimeInterval = 8.0 // 8 seconds of silence = stop listening
+    private let noSpeechStopThreshold: TimeInterval = 5.0 // 5 seconds of no speech detected = stop listening
     private var lastSpeechTime: Date?
+    private var noSpeechErrorCount = 0
     
     struct ConversationMessage: Identifiable {
         let id = UUID()
@@ -29,11 +32,42 @@ class VoiceAssistant: ObservableObject {
         let isUser: Bool
         let timestamp: Date
         let emoji: String?
+        var analysis: String? = nil
     }
     
     init() {
         speechRecognizer = SFSpeechRecognizer(locale: Locale(identifier: "en-US"))
         requestSpeechAuthorization()
+        setupAnalysisListener()
+    }
+    
+    private func setupAnalysisListener() {
+        NotificationCenter.default.addObserver(
+            forName: NSNotification.Name("ConversationAnalysis"),
+            object: nil,
+            queue: .main
+        ) { [weak self] notification in
+            if let dict = notification.object as? [String: String],
+               let analysis = dict["analysis"],
+               let lastMessage = self?.conversationHistory.last,
+               !lastMessage.isUser {
+                // Update the last assistant message with analysis
+                if let index = self?.conversationHistory.firstIndex(where: { $0.id == lastMessage.id }) {
+                    var updatedMessage = lastMessage
+                    updatedMessage.analysis = analysis
+                    self?.conversationHistory[index] = updatedMessage
+                }
+            }
+        }
+    }
+    
+    func deleteConversation(at index: Int) {
+        guard index >= 0 && index < conversationHistory.count else { return }
+        conversationHistory.remove(at: index)
+    }
+    
+    func deleteAllConversations() {
+        conversationHistory.removeAll()
     }
     
     func requestSpeechAuthorization() {
@@ -101,6 +135,9 @@ class VoiceAssistant: ObservableObject {
                     self.resetPauseTimer()
                     // Reset silence timer - user is speaking
                     self.resetSilenceTimer()
+                    // Reset no speech timer - speech detected
+                    self.resetNoSpeechTimer()
+                    self.noSpeechErrorCount = 0
                 }
                 
                 if result.isFinal {
@@ -120,10 +157,17 @@ class VoiceAssistant: ObservableObject {
                 if nsError.code != 301 && nsError.code != 216 { // 301 = canceled, 216 = no speech (normal)
                     print("❌ Recognition error: \(error.localizedDescription)")
                 }
-                // Don't stop listening for "no speech" errors - user might still be speaking
+                
                 if nsError.code == 301 { // Canceled
                     self.stopListening()
-                } else if nsError.code != 216 { // No speech detected is normal, don't stop
+                } else if nsError.code == 216 { // No speech detected
+                    // Track no speech errors
+                    DispatchQueue.main.async {
+                        self.noSpeechErrorCount += 1
+                        // Start timer to stop if no speech continues
+                        self.startNoSpeechTimer()
+                    }
+                } else {
                     // For other errors, try to restart listening
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
                         if !self.isListening {
@@ -160,6 +204,9 @@ class VoiceAssistant: ObservableObject {
         pauseTimer = nil
         silenceTimer?.invalidate()
         silenceTimer = nil
+        noSpeechTimer?.invalidate()
+        noSpeechTimer = nil
+        noSpeechErrorCount = 0
         
         // Process any accumulated text before stopping
         let textToProcess = accumulatedText
@@ -231,6 +278,29 @@ class VoiceAssistant: ObservableObject {
         }
     }
     
+    private func resetNoSpeechTimer() {
+        noSpeechTimer?.invalidate()
+        noSpeechTimer = nil
+    }
+    
+    private func startNoSpeechTimer() {
+        resetNoSpeechTimer()
+        
+        noSpeechTimer = Timer.scheduledTimer(withTimeInterval: noSpeechStopThreshold, repeats: false) { [weak self] _ in
+            guard let self = self else { return }
+            
+            // No speech detected for threshold period - stop listening
+            if self.isListening && self.noSpeechErrorCount > 0 {
+                self.stopListening()
+                
+                // Auto-restart listening after a brief pause
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                    self.startListening()
+                }
+            }
+        }
+    }
+    
     func handleTap() {
         if isListening {
             // Stop listening immediately when tapped
@@ -282,7 +352,7 @@ class VoiceAssistant: ObservableObject {
         }.joined(separator: "\n")
     }
     
-    func speak(_ text: String, emoji: String? = nil) async {
+    func speak(_ text: String, emoji: String? = nil, analysis: String? = nil) async {
         await MainActor.run {
             self.isSpeaking = true
         }
@@ -299,7 +369,8 @@ class VoiceAssistant: ObservableObject {
             text: text,
             isUser: false,
             timestamp: Date(),
-            emoji: emoji
+            emoji: emoji,
+            analysis: analysis
         )
         
         await MainActor.run {
