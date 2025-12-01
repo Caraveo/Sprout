@@ -181,14 +181,35 @@ class VoiceAssistant: ObservableObject {
         utterance.rate = 0.5
         
         let synthesizer = AVSpeechSynthesizer()
+        var delegate: SpeechDelegate?
         
         await withCheckedContinuation { continuation in
-            let delegate = SpeechDelegate {
-                continuation.resume()
+            var hasResumed = false
+            let resumeOnce = {
+                if !hasResumed {
+                    hasResumed = true
+                    continuation.resume()
+                }
+            }
+            
+            delegate = SpeechDelegate {
+                resumeOnce()
             }
             synthesizer.delegate = delegate
+            
+            // Start speaking
             synthesizer.speak(utterance)
+            
+            // Timeout safety - ensure continuation always resumes
+            Task {
+                try? await Task.sleep(nanoseconds: 30_000_000_000) // 30 seconds max
+                resumeOnce()
+            }
         }
+        
+        // Clean up
+        synthesizer.delegate = nil
+        delegate = nil
     }
     
     private func playAudio(_ data: Data) async {

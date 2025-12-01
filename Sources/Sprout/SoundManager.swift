@@ -19,7 +19,6 @@ class SoundManager {
         // Load from bundle (SPM resources)
         let bundle = Bundle.main
         
-        // For SPM executables, resources are in Fierro_Fierro.bundle
         // Try main bundle first
         if let startURL = bundle.url(forResource: "start", withExtension: "wav") {
             loadStartSound(from: startURL)
@@ -29,29 +28,33 @@ class SoundManager {
             loadTouchSound(from: touchURL)
         }
         
-        // Try to find the bundle directory
+        // Try to find the bundle directory for SPM
         let executablePath = bundle.executablePath ?? ""
         let executableDir = (executablePath as NSString).deletingLastPathComponent
-        let bundlePath = executableDir + "/Fierro_Fierro.bundle"
         
-        // Try loading from the SPM bundle
-        if FileManager.default.fileExists(atPath: bundlePath) {
-            let startPath = bundlePath + "/start.wav"
-            let touchPath = bundlePath + "/touch.wav"
-            
-            if FileManager.default.fileExists(atPath: startPath) {
-                loadStartSound(from: URL(fileURLWithPath: startPath))
-            }
-            
-            if FileManager.default.fileExists(atPath: touchPath) {
-                loadTouchSound(from: URL(fileURLWithPath: touchPath))
+        // Try Sprout_Sprout.bundle (SPM naming convention)
+        let bundleNames = ["Sprout_Sprout.bundle", "Fierro_Fierro.bundle"]
+        for bundleName in bundleNames {
+            let bundlePath = executableDir + "/" + bundleName
+            if FileManager.default.fileExists(atPath: bundlePath) {
+                let startPath = bundlePath + "/start.wav"
+                let touchPath = bundlePath + "/touch.wav"
+                
+                if startPlayer == nil && FileManager.default.fileExists(atPath: startPath) {
+                    loadStartSound(from: URL(fileURLWithPath: startPath))
+                }
+                
+                if touchPlayer == nil && FileManager.default.fileExists(atPath: touchPath) {
+                    loadTouchSound(from: URL(fileURLWithPath: touchPath))
+                }
             }
         }
         
-        // Fallback: try direct paths
+        // Fallback: try direct paths relative to executable
         if startPlayer == nil {
             let fallbackPaths = [
                 executableDir + "/start.wav",
+                executableDir + "/Resources/start.wav",
                 bundle.resourcePath.map { ($0 as NSString).appendingPathComponent("start.wav") }
             ].compactMap { $0 }
             
@@ -66,6 +69,7 @@ class SoundManager {
         if touchPlayer == nil {
             let fallbackPaths = [
                 executableDir + "/touch.wav",
+                executableDir + "/Resources/touch.wav",
                 bundle.resourcePath.map { ($0 as NSString).appendingPathComponent("touch.wav") }
             ].compactMap { $0 }
             
@@ -73,6 +77,25 @@ class SoundManager {
                 if FileManager.default.fileExists(atPath: path) {
                     loadTouchSound(from: URL(fileURLWithPath: path))
                     break
+                }
+            }
+        }
+        
+        // Final fallback: try to find in build directory
+        if startPlayer == nil || touchPlayer == nil {
+            let buildResourcePath = executableDir + "/../Resources"
+            if FileManager.default.fileExists(atPath: buildResourcePath) {
+                if startPlayer == nil {
+                    let startPath = buildResourcePath + "/start.wav"
+                    if FileManager.default.fileExists(atPath: startPath) {
+                        loadStartSound(from: URL(fileURLWithPath: startPath))
+                    }
+                }
+                if touchPlayer == nil {
+                    let touchPath = buildResourcePath + "/touch.wav"
+                    if FileManager.default.fileExists(atPath: touchPath) {
+                        loadTouchSound(from: URL(fileURLWithPath: touchPath))
+                    }
                 }
             }
         }
