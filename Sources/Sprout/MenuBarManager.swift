@@ -26,12 +26,10 @@ class MenuBarManager: ObservableObject {
         popover.contentSize = NSSize(width: 300, height: 450)
         popover.behavior = .transient
         popover.contentViewController = NSHostingController(
-            rootView: NavigationView {
-                MenuBarView()
-                    .environmentObject(voiceAssistant)
-                    .environmentObject(wellbeingCoach)
-            }
-            .frame(width: 300, height: 450)
+            rootView: MenuBarView()
+                .environmentObject(voiceAssistant)
+                .environmentObject(wellbeingCoach)
+                .frame(width: 300, height: 450)
         )
         self.popover = popover
     }
@@ -184,15 +182,30 @@ struct MenuBarView: View {
                 // View full log button
                 Divider()
                 
-                NavigationLink(destination: ConversationLogView().environmentObject(voiceAssistant)) {
+                Button(action: {
+                    // Open conversation log in a new window
+                    let window = NSWindow(
+                        contentRect: NSRect(x: 0, y: 0, width: 500, height: 600),
+                        styleMask: [.titled, .closable, .resizable],
+                        backing: .buffered,
+                        defer: false
+                    )
+                    window.title = "Conversation Log"
+                    window.contentView = NSHostingView(
+                        rootView: ConversationLogView()
+                            .environmentObject(voiceAssistant)
+                    )
+                    window.center()
+                    window.makeKeyAndOrderFront(nil)
+                }) {
                     HStack {
                         Image(systemName: "list.bullet.rectangle")
                             .font(.system(size: 14))
                         Text("View Full Conversation Log")
                             .font(.system(size: 13, weight: .medium))
                         Spacer()
-                        Image(systemName: "chevron.right")
-                            .font(.system(size: 10))
+                        Image(systemName: "arrow.right.circle")
+                            .font(.system(size: 12))
                             .foregroundColor(.secondary)
                     }
                     .padding(.horizontal, 12)

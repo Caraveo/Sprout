@@ -47,15 +47,17 @@ class VoiceAssistant: ObservableObject {
             object: nil,
             queue: .main
         ) { [weak self] notification in
+            guard let self = self else { return }
             if let dict = notification.object as? [String: String],
                let analysis = dict["analysis"],
-               let lastMessage = self?.conversationHistory.last,
+               !analysis.isEmpty,
+               let lastMessage = self.conversationHistory.last,
                !lastMessage.isUser {
                 // Update the last assistant message with analysis
-                if let index = self?.conversationHistory.firstIndex(where: { $0.id == lastMessage.id }) {
+                if let index = self.conversationHistory.firstIndex(where: { $0.id == lastMessage.id }) {
                     var updatedMessage = lastMessage
                     updatedMessage.analysis = analysis
-                    self?.conversationHistory[index] = updatedMessage
+                    self.conversationHistory[index] = updatedMessage
                 }
             }
         }
