@@ -25,76 +25,98 @@ else
     exit 1
 fi
 
-# OpenVoice V2 checkpoints zip file
-CHECKPOINTS_URL="https://myshell-public-repo-host.s3.amazonaws.com/openvoice/checkpoints_v2_0417.zip"
-ZIP_FILE="checkpoints_v2_0417.zip"
+# OpenVoice V2 checkpoints zip file (converter only - uses MeloTTS for base)
+CHECKPOINTS_V2_URL="https://myshell-public-repo-host.s3.amazonaws.com/openvoice/checkpoints_v2_0417.zip"
+# OpenVoice V1 checkpoints zip file (includes base_speakers/EN)
+CHECKPOINTS_V1_URL="https://myshell-public-repo-host.s3.amazonaws.com/openvoice/checkpoints_1226.zip"
+ZIP_FILE_V2="checkpoints_v2_0417.zip"
+ZIP_FILE_V1="checkpoints_1226.zip"
 
-echo "📦 Downloading OpenVoice V2 checkpoints..."
-echo "   This is a large file (~700MB), please be patient..."
+echo "📦 Downloading OpenVoice checkpoints..."
+echo "   We need both V1 (base speakers) and V2 (converter) checkpoints"
+echo "   This will download ~900MB total, please be patient..."
 echo ""
 
-# Download the zip file
-$DOWNLOAD_CMD $DOWNLOAD_FLAGS "$ZIP_FILE" "$CHECKPOINTS_URL"
+# Download V1 checkpoints (for base_speakers/EN)
+echo "   Step 1/2: Downloading V1 checkpoints (base speakers)..."
+$DOWNLOAD_CMD $DOWNLOAD_FLAGS "$ZIP_FILE_V1" "$CHECKPOINTS_V1_URL"
 
 if [ $? -ne 0 ]; then
-    echo "❌ Failed to download checkpoints"
+    echo "❌ Failed to download V1 checkpoints"
     echo "   Please try downloading manually from:"
-    echo "   $CHECKPOINTS_URL"
+    echo "   $CHECKPOINTS_V1_URL"
+    exit 1
+fi
+
+# Download V2 checkpoints (for converter)
+echo ""
+echo "   Step 2/2: Downloading V2 checkpoints (converter)..."
+$DOWNLOAD_CMD $DOWNLOAD_FLAGS "$ZIP_FILE_V2" "$CHECKPOINTS_V2_URL"
+
+if [ $? -ne 0 ]; then
+    echo "❌ Failed to download V2 checkpoints"
+    echo "   Please try downloading manually from:"
+    echo "   $CHECKPOINTS_V2_URL"
+    rm -f "$ZIP_FILE_V1"
     exit 1
 fi
 
 echo ""
 echo "📦 Extracting checkpoints..."
 
-# Extract the zip file
-unzip -q "$ZIP_FILE" -d .
+# Extract V1 zip file (base_speakers/EN)
+echo "   Extracting V1 checkpoints..."
+unzip -q -o "$ZIP_FILE_V1" -d .
+
+# Extract V2 zip file (converter)
+echo "   Extracting V2 checkpoints..."
+unzip -q -o "$ZIP_FILE_V2" -d .
 
 if [ $? -ne 0 ]; then
     echo "❌ Failed to extract checkpoints"
-    rm -f "$ZIP_FILE"
+    rm -f "$ZIP_FILE_V1" "$ZIP_FILE_V2"
     exit 1
 fi
 
-# Move checkpoints_v2 to checkpoints (service expects this structure)
-if [ -d "checkpoints_v2" ]; then
-    echo "   Moving checkpoints to correct location..."
-    
-    # Create base_speakers/EN directory if needed
-    mkdir -p checkpoints/base_speakers/EN
-    mkdir -p checkpoints/converter
-    
-    # Copy files
-    if [ -f "checkpoints_v2/base_speakers/EN/config.json" ]; then
-        cp checkpoints_v2/base_speakers/EN/config.json checkpoints/base_speakers/EN/
-        echo "   ✅ Copied base_speakers/EN/config.json"
+# Organize checkpoints (service expects this structure)
+echo "   Organizing checkpoints..."
+
+# Create directories
+mkdir -p checkpoints/base_speakers/EN
+mkdir -p checkpoints/converter
+
+# Copy V1 base_speakers/EN files
+if [ -d "checkpoints/base_speakers/EN" ] && [ -f "checkpoints/base_speakers/EN/config.json" ]; then
+    echo "   ✅ V1 base_speakers/EN already in place"
+elif [ -f "checkpoints/base_speakers/EN/config.json" ]; then
+    echo "   ✅ Found base_speakers/EN/config.json"
+else
+    # Try to find it in extracted files
+    if [ -f "checkpoints/base_speakers/EN/config.json" ]; then
+        echo "   ✅ Found base_speakers/EN/config.json"
+    else
+        echo "   ⚠️  base_speakers/EN/config.json not found, checking extracted files..."
+        find . -name "config.json" -path "*/base_speakers/EN/*" | head -1 | xargs -I {} cp {} checkpoints/base_speakers/EN/ 2>/dev/null
+        find . -name "checkpoint.pth" -path "*/base_speakers/EN/*" | head -1 | xargs -I {} cp {} checkpoints/base_speakers/EN/ 2>/dev/null
     fi
-    
-    if [ -f "checkpoints_v2/base_speakers/EN/checkpoint.pth" ]; then
-        cp checkpoints_v2/base_speakers/EN/checkpoint.pth checkpoints/base_speakers/EN/
-        echo "   ✅ Copied base_speakers/EN/checkpoint.pth"
-    fi
-    
+fi
+
+# Copy V2 converter files
+if [ -d "checkpoints_v2/converter" ]; then
     if [ -f "checkpoints_v2/converter/config.json" ]; then
         cp checkpoints_v2/converter/config.json checkpoints/converter/
         echo "   ✅ Copied converter/config.json"
     fi
-    
     if [ -f "checkpoints_v2/converter/checkpoint.pth" ]; then
         cp checkpoints_v2/converter/checkpoint.pth checkpoints/converter/
         echo "   ✅ Copied converter/checkpoint.pth"
     fi
-    
-    # Clean up
-    echo "   Cleaning up..."
-    rm -rf checkpoints_v2
-    rm -f "$ZIP_FILE"
-else
-    echo "⚠️  checkpoints_v2 directory not found in zip file"
-    echo "   Checking zip contents..."
-    unzip -l "$ZIP_FILE" | head -20
-    rm -f "$ZIP_FILE"
-    exit 1
 fi
+
+# Clean up
+echo "   Cleaning up temporary files..."
+rm -rf checkpoints_v2
+rm -f "$ZIP_FILE_V1" "$ZIP_FILE_V2"
 
 echo ""
 echo "======================================"
