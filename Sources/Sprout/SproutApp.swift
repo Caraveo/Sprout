@@ -35,6 +35,7 @@ struct SproutApp: App {
         }
         .windowResizability(.contentSize)
         .defaultSize(width: 300, height: 300)
+        .windowStyle(.hiddenTitleBar)
     }
     
 }
@@ -63,7 +64,7 @@ struct WindowAccessor: NSViewRepresentable {
         window.isOpaque = false
         window.hasShadow = true
         window.level = .floating
-        window.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]
+        window.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .moveToActiveSpace]
         window.ignoresMouseEvents = false
         window.styleMask = [.borderless, .fullSizeContentView]
         window.titlebarAppearsTransparent = true
@@ -71,6 +72,17 @@ struct WindowAccessor: NSViewRepresentable {
         window.isMovableByWindowBackground = true
         window.contentView?.wantsLayer = true
         window.contentView?.layer?.masksToBounds = false
+        
+        // Ensure window can be moved anywhere on screen
+        window.isMovable = true
+        window.isMovableByWindowBackground = true
+        
+        // Remove any constraints that might prevent movement to screen edges
+        // Allow window to move to any position including top of screen
+        if let contentView = window.contentView {
+            // Make sure content view doesn't have constraints preventing movement
+            contentView.translatesAutoresizingMaskIntoConstraints = true
+        }
         
         if let contentView = window.contentView {
             let trackingArea = NSTrackingArea(
@@ -83,6 +95,7 @@ struct WindowAccessor: NSViewRepresentable {
         }
         
         // Position at bottom right - smaller window for just orb
+        // But allow it to be moved anywhere
         if let screen = NSScreen.main {
             let screenRect = screen.visibleFrame
             let windowSize = NSSize(width: 300, height: 300)

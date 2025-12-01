@@ -104,25 +104,27 @@ class DraggableNSView: NSView {
     private let dragThreshold: CGFloat = 3.0
     
     override var mouseDownCanMoveWindow: Bool {
-        return false
+        return true  // Allow window to be moved by dragging
     }
     
     override func hitTest(_ point: NSPoint) -> NSView? {
-        let center = NSPoint(x: bounds.midX, y: bounds.midY)
-        let distance = sqrt(pow(point.x - center.x, 2) + pow(point.y - center.y, 2))
-        let maxRadius = min(bounds.width, bounds.height) * 0.4
-        
-        if distance <= maxRadius {
-            return super.hitTest(point)
-        }
-        
-        return nil
+        // Allow dragging from anywhere, but only tap the orb area
+        return super.hitTest(point)
     }
     
     override func mouseDown(with event: NSEvent) {
         mouseDownLocation = event.locationInWindow
-        SoundManager.shared.playTouch()
-        onTap?()
+        
+        // Check if click is on the orb (center area)
+        let center = NSPoint(x: bounds.midX, y: bounds.midY)
+        let clickPoint = event.locationInWindow
+        let distance = sqrt(pow(clickPoint.x - center.x, 2) + pow(clickPoint.y - center.y, 2))
+        let maxRadius = min(bounds.width, bounds.height) * 0.4
+        
+        if distance <= maxRadius {
+            SoundManager.shared.playTouch()
+            onTap?()
+        }
     }
     
     override func mouseDragged(with event: NSEvent) {
@@ -131,6 +133,7 @@ class DraggableNSView: NSView {
         let distance = sqrt(pow(currentLocation.x - startLocation.x, 2) + pow(currentLocation.y - startLocation.y, 2))
         
         if distance > dragThreshold {
+            // Allow window to be dragged anywhere
             window?.performDrag(with: event)
             mouseDownLocation = nil
         }
