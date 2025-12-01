@@ -1,165 +1,180 @@
-# 🌱 Sprout - Mind Wellbeing Voice Assistant
+# 🌱 Sprout
 
-A comprehensive SwiftUI voice assistant application that combines voice interaction, emoji reactions, and mind wellbeing support. Built with Fierro's audio-reactive visualizations and OpenVoice for natural speech synthesis.
+**A beautiful voice assistant for mind wellbeing**
 
-## Features
+Sprout is a macOS application that combines voice interaction, AI-powered conversations, and beautiful visualizations to support your emotional wellness journey. Built with SwiftUI and featuring an audio-reactive ferrofluid orb, Sprout provides a gentle, supportive companion for daily mind wellbeing.
 
-- **Voice Interaction**: Real-time speech recognition and natural voice responses
-- **Audio-Reactive Visualizations**: Beautiful ferrofluid orb that responds to your voice
-- **Emoji Reactions**: Dynamic emoji responses based on audio and conversation context
-- **Mind Wellbeing Support**: 
-  - Guided breathing exercises
-  - Meditation sessions
-  - Mood tracking
-  - Daily progress tracking
-- **OpenVoice Integration**: Natural voice synthesis with voice cloning capabilities
+## ✨ Features
 
-## Requirements
+### 🎤 Voice Interaction
+- **Real-time speech recognition** - Automatically listens and transcribes your words
+- **AI-powered responses** - Powered by Ollama for natural, empathetic conversations
+- **Voice synthesis** - OpenVoice integration for natural-sounding speech (with system TTS fallback)
+- **Smart conversation flow** - Automatically detects pauses and manages conversation context
 
-- macOS 13.0 or later
-- Metal-capable GPU
-- Microphone access
-- Python 3.9+ (for OpenVoice service)
-- Ollama (optional, for AI responses) - Install from https://ollama.ai
+### 🌊 Visual Experience
+- **Audio-reactive orb** - Beautiful Metal-rendered ferrofluid visualization that responds to your voice
+- **Emoji expressions** - Visual feedback that matches the emotional tone of conversations
+- **Minimalist interface** - Clean, distraction-free design focused on the orb
 
-## Setup
+### 💚 Mind Wellbeing Support
+- **Mood tracking** - Track your daily emotional state
+- **Breathing exercises** - Guided breathing sessions (4-7-8, Box Breathing, Deep Calm)
+- **Meditation sessions** - Short mindfulness practices
+- **Hourly encouragements** - Random AI-generated supportive messages throughout the day
+- **Conversation history** - Full log of interactions with analysis
 
-### 1. Install Swift Dependencies
+### 🎯 Smart Features
+- **Auto-start listening** - Begins listening when the app launches
+- **Pause detection** - Automatically processes speech after natural pauses
+- **Tap to interact** - Click the orb to stop speaking or toggle listening
+- **Menu bar integration** - Quick access to all features via menu bar icon
 
-```bash
-swift build
+## 🚀 Getting Started
+
+### Prerequisites
+
+- **macOS 13.0 or later**
+- **Xcode 15.0 or later** (for building from source)
+- **Ollama** - Local LLM server (default: llama3.2 model)
+- **Python 3.11** - For OpenVoice service (optional, falls back to system TTS)
+
+### Installation
+
+1. **Clone the repository:**
+   ```bash
+   git clone https://github.com/caraveo/Sprout.git
+   cd Sprout
+   ```
+
+2. **Set up OpenVoice (optional but recommended):**
+   ```bash
+   ./setup.sh
+   ```
+
+3. **Start OpenVoice service (if using):**
+   ```bash
+   ./services/start_openvoice.sh
+   ```
+
+4. **Ensure Ollama is running:**
+   ```bash
+   # Install Ollama from https://ollama.ai
+   ollama serve
+   # Pull the model
+   ollama pull llama3.2
+   ```
+
+5. **Build and run:**
+   ```bash
+   swift build -c release
+   .build/arm64-apple-macosx/release/Sprout
+   ```
+
+## 📖 Usage
+
+### First Launch
+- The app automatically starts listening when launched
+- Grant microphone permissions when prompted
+- Speak naturally - Sprout will transcribe and respond
+
+### Basic Interactions
+- **Speak** - Just talk naturally, Sprout listens automatically
+- **Tap orb** - While speaking: stops speech | While listening: stops listening | Otherwise: starts listening
+- **Menu bar** - Click the leaf icon for quick access to all features
+
+### Voice Commands
+- "breathing exercise" or "breathe" - Start a guided breathing session
+- "meditate" or "meditation" - Begin a mindfulness session
+- Natural conversation - Ask questions, share feelings, get support
+
+### Menu Bar Features
+- **Mood selection** - Track your current emotional state
+- **Quick actions** - Start/stop listening, breathing exercises, meditation
+- **Progress tracking** - View daily streak and weekly activity
+- **Conversation log** - Review full history with AI analysis
+
+## 🏗️ Architecture
+
+### Core Components
+- **VoiceAssistant** - Manages speech recognition, TTS, and conversation flow
+- **WellbeingCoach** - Handles mood tracking, exercises, and AI interactions
+- **OllamaService** - Communicates with local LLM for AI responses
+- **OpenVoiceService** - Voice cloning and synthesis (optional)
+- **MetalRenderer** - Audio-reactive ferrofluid orb visualization
+- **AudioAnalyzer** - Real-time audio processing for visualization
+
+### Technology Stack
+- **SwiftUI** - Modern macOS UI framework
+- **Metal** - GPU-accelerated graphics rendering
+- **AVFoundation** - Audio processing and speech recognition
+- **Speech Framework** - Real-time speech-to-text
+- **Ollama** - Local LLM inference
+- **OpenVoice** - Voice cloning and TTS (MIT/MyShell)
+
+## 🔧 Configuration
+
+### Ollama Settings
+Edit `OllamaService.swift` to change:
+- Model: Default is `llama3.2`
+- Base URL: Default is `http://localhost:11434`
+
+### OpenVoice Settings
+Edit `services/openvoice_service.py` to configure:
+- Port: Default is `6000`
+- Model paths: Update checkpoint and config paths
+
+## 📝 Development
+
+### Project Structure
+```
+Sprout/
+├── Sources/Sprout/          # Main Swift source files
+│   ├── SproutApp.swift       # App entry point
+│   ├── MainView.swift        # Main UI
+│   ├── VoiceAssistant.swift # Speech & conversation
+│   ├── WellbeingCoach.swift # Wellbeing features
+│   ├── MetalRenderer.swift  # Orb visualization
+│   └── ...
+├── services/                 # Python services
+│   └── openvoice_service.py  # OpenVoice HTTP service
+├── Package.swift            # Swift package definition
+└── README.md                # This file
 ```
 
-### 2. Setup Ollama (Optional but Recommended)
-
-```bash
-# Install Ollama from https://ollama.ai or:
-brew install ollama
-
-# Start Ollama service
-ollama serve
-
-# Pull a model (in another terminal)
-ollama pull llama3.2
-# or
-ollama pull mistral
-```
-
-The app will automatically use Ollama if available, otherwise it will use simple rule-based responses.
-
-### 3. Setup OpenVoice Service
-
-```bash
-# Install Python dependencies
-cd services
-pip install -r requirements.txt
-
-# Clone OpenVoice repository
-cd ..
-git clone https://github.com/myshell-ai/OpenVoice.git
-
-# Download checkpoints (see OpenVoice README)
-# Place checkpoints in checkpoints/ directory
-
-# Start the service
-python services/openvoice_service.py
-```
-
-The OpenVoice service runs on port 6000 by default.
-
-### 4. Build and Run
-
+### Building
 ```bash
 # Debug build
 swift build
 
-# Release build (recommended)
+# Release build
 swift build -c release
 
-# Run the app
-swift run -c release
+# Run
+swift run
 ```
 
-## Usage
+## 🤝 Contributing
 
-1. **Launch Sprout**: The app will appear at the bottom right of your screen
-2. **Grant Permissions**: Allow microphone access when prompted
-3. **Interact**:
-   - **Tap the orb** to start/stop voice listening
-   - **Speak naturally** - the assistant will respond with voice and emoji
-   - **Open dashboard** - Click the chart icon to see your wellbeing progress
-   - **Try exercises** - Ask for "breathing exercise" or "meditation"
+Contributions are welcome! Please feel free to submit a Pull Request.
 
-## Voice Commands
+## 📄 License
 
-- "Hello" / "Hi" - Start a conversation
-- "I feel [mood]" - Share your current mood
-- "Breathing exercise" - Start a guided breathing session
-- "Meditation" - Begin a mindfulness session
-- "Thank you" - Express gratitude
+See [COPYRIGHT.md](COPYRIGHT.md) for license information.
 
-## Architecture
+## 🙏 Acknowledgments
 
-### SwiftUI Components
+- **Fierro** - Base ferrofluid orb visualization (https://github.com/caraveo/fierro)
+- **OpenVoice** - Voice cloning technology (https://github.com/myshell-ai/OpenVoice)
+- **Ollama** - Local LLM inference (https://ollama.ai)
 
-- `SproutApp.swift` - Main application entry point
-- `MainView.swift` - Primary UI with orb visualization
-- `VoiceAssistant.swift` - Speech recognition and synthesis
-- `WellbeingCoach.swift` - Mind wellbeing features and coaching
-- `EmojiView.swift` - Dynamic emoji reactions
-- `MetalRenderer.swift` - Audio-reactive ferrofluid visualization
-- `AudioAnalyzer.swift` - Real-time audio analysis
+## 💡 Tips
 
-### Python Service
+- **Privacy-first** - All AI processing happens locally via Ollama
+- **Offline capable** - Works without internet (except for initial model downloads)
+- **Customizable** - Easy to modify prompts, models, and responses
+- **Lightweight** - Minimal resource usage when idle
 
-- `services/openvoice_service.py` - HTTP API for OpenVoice integration
+---
 
-## Customization
-
-### Adjust Audio Sensitivity
-
-Edit `AudioAnalyzer.swift`:
-```swift
-let normalizedLevel = min(rms * 50.0, 1.0) // Adjust multiplier
-```
-
-### Modify Orb Appearance
-
-Edit `MetalRenderer.swift` shader parameters or `FerrofluidShader.metal`
-
-### Add Wellbeing Exercises
-
-Extend `WellbeingCoach.swift` with new exercises in the `breathingExercises` array
-
-## Troubleshooting
-
-### Audio Not Working
-
-1. Check microphone permission: System Settings > Privacy & Security > Microphone
-2. Verify audio engine started (check console output)
-3. App will fall back to simulated audio if microphone unavailable
-
-### OpenVoice Service Not Responding
-
-1. Ensure service is running: `python services/openvoice_service.py`
-2. Check port 6000 is available
-3. Verify OpenVoice checkpoints are installed
-4. App will fall back to system TTS if service unavailable
-
-### Build Issues
-
-- Ensure macOS 13.0+ and Metal-capable GPU
-- Check Swift Package Manager can access all resources
-- Verify Metal shader compilation
-
-## License
-
-This project integrates:
-- **Fierro** - Copyright © 2024 Jonathan Caraveo (non-commercial use)
-- **OpenVoice** - MIT License (free for commercial use)
-
-## Acknowledgments
-
-- [Fierro](https://github.com/caraveo/fierro) - Audio-reactive ferrofluid visualization
-- [OpenVoice](https://github.com/myshell-ai/OpenVoice) - Voice cloning and synthesis by MIT and MyShell
-
+**Made with 💚 for mind wellbeing**
