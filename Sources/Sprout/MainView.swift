@@ -68,11 +68,13 @@ struct MainView: View {
                         EmojiView()
                             .allowsHitTesting(false)
                         
-                        // Voice assistant status
+                        // Voice assistant status - always visible
                         VStack {
                             Spacer()
                             VoiceAssistantView()
+                                .padding(.horizontal, 12)
                                 .padding(.bottom, 20)
+                                .frame(maxWidth: .infinity)
                         }
                         
                         // Invisible draggable overlay with touch reaction

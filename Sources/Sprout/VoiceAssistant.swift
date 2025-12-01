@@ -57,21 +57,32 @@ class VoiceAssistant: ObservableObject {
             return
         }
         
+        // Don't restart if already listening
+        if isListening {
+            return
+        }
+        
         stopListening()
         
         audioEngine = AVAudioEngine()
-        guard let audioEngine = audioEngine else { return }
+        guard let audioEngine = audioEngine else {
+            print("❌ Failed to create audio engine")
+            return
+        }
         
         recognitionRequest = SFSpeechAudioBufferRecognitionRequest()
-        guard let recognitionRequest = recognitionRequest else { return }
+        guard let recognitionRequest = recognitionRequest else {
+            print("❌ Failed to create recognition request")
+            return
+        }
         
         recognitionRequest.shouldReportPartialResults = true
         
         let inputNode = audioEngine.inputNode
         let recordingFormat = inputNode.outputFormat(forBus: 0)
         
-        inputNode.installTap(onBus: 0, bufferSize: 1024, format: recordingFormat) { buffer, _ in
-            recognitionRequest.append(buffer)
+        inputNode.installTap(onBus: 0, bufferSize: 1024, format: recordingFormat) { [weak self] buffer, _ in
+            self?.recognitionRequest?.append(buffer)
         }
         
         recognitionTask = speechRecognizer.recognitionTask(with: recognitionRequest) { [weak self] result, error in
@@ -80,6 +91,7 @@ class VoiceAssistant: ObservableObject {
             if let result = result {
                 let text = result.bestTranscription.formattedString
                 DispatchQueue.main.async {
+                    // Always update current message for real-time display
                     self.currentMessage = text
                     // Update accumulated text with latest transcription
                     self.accumulatedText = text
@@ -112,7 +124,12 @@ class VoiceAssistant: ObservableObject {
                 if nsError.code == 301 { // Canceled
                     self.stopListening()
                 } else if nsError.code != 216 { // No speech detected is normal, don't stop
-                    self.stopListening()
+                    // For other errors, try to restart listening
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                        if !self.isListening {
+                            self.startListening()
+                        }
+                    }
                 }
             }
         }
@@ -129,6 +146,12 @@ class VoiceAssistant: ObservableObject {
             print("✅ Started listening")
         } catch {
             print("❌ Failed to start audio engine: \(error)")
+            // Try again after a delay
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                if !self.isListening {
+                    self.startListening()
+                }
+            }
         }
     }
     
@@ -137,6 +160,10 @@ class VoiceAssistant: ObservableObject {
         pauseTimer = nil
         silenceTimer?.invalidate()
         silenceTimer = nil
+        
+        // Process any accumulated text before stopping
+        let textToProcess = accumulatedText
+        accumulatedText = ""
         
         audioEngine?.stop()
         audioEngine?.inputNode.removeTap(onBus: 0)
@@ -149,11 +176,15 @@ class VoiceAssistant: ObservableObject {
         
         DispatchQueue.main.async {
             self.isListening = false
-            self.currentMessage = ""
-            // Process any accumulated text before stopping
-            if !self.accumulatedText.isEmpty {
-                self.processUserMessage(self.accumulatedText)
-                self.accumulatedText = ""
+            // Keep current message visible for a moment, then clear
+            if !textToProcess.isEmpty {
+                self.processUserMessage(textToProcess)
+                // Clear after processing
+                DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
+                    if self.currentMessage == textToProcess {
+                        self.currentMessage = ""
+                    }
+                }
             }
         }
     }
