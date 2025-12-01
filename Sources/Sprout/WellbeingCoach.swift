@@ -44,7 +44,42 @@ class WellbeingCoach: ObservableObject {
     init() {
         loadProgress()
         setupNotifications()
+        setupModeDetection()
         scheduleNextEncouragement()
+    }
+    
+    private func setupModeDetection() {
+        // Listen for gaming mode detection
+        NotificationCenter.default.addObserver(
+            forName: NSNotification.Name("GamingModeDetected"),
+            object: nil,
+            queue: .main
+        ) { [weak self] notification in
+            if let dict = notification.object as? [String: String],
+               let game = dict["game"] {
+                Task {
+                    await self?.handleGamingModeDetected(game: game)
+                }
+            }
+        }
+    }
+    
+    private func handleGamingModeDetected(game: String) async {
+        // Enthusiastic gaming response!
+        let responses = [
+            "WoW! I love gaming! Let's do this! \(game) is awesome!",
+            "Yes! Gaming mode activated! I'm so excited you're playing \(game)!",
+            "WoW! \(game)! I absolutely love gaming! This is going to be amazing!",
+            "Gaming time! \(game) is one of my favorites! Let's have some fun!",
+            "WoW! I detected \(game)! I love gaming so much! Ready to play!"
+        ]
+        
+        let response = responses.randomElement() ?? responses[0]
+        let emoji = "🎮"
+        
+        await globalVoiceAssistant?.speak(response, emoji: emoji)
+        
+        print("🎮 Gaming mode detected: \(game)")
     }
     
     private func setupNotifications() {
@@ -99,12 +134,15 @@ class WellbeingCoach: ObservableObject {
         let analysis: String? = nil // Will be set via notification
         let moodContext = "Current mood: \(currentMood.rawValue). \(currentMood.emoji)"
         
-        // Combine conversation context with mood context
+        // Get mode context
+        let modeContext = globalAppModeDetector?.getModeContext() ?? ""
+        
+        // Combine conversation context with mood and mode context
         let fullContext: String
         if !context.isEmpty {
-            fullContext = "\(moodContext)\n\nRecent conversation:\n\(context)"
+            fullContext = "\(moodContext)\n\(modeContext)\n\nRecent conversation:\n\(context)"
         } else {
-            fullContext = moodContext
+            fullContext = "\(moodContext)\n\(modeContext)"
         }
         
         if let ollamaResponse = await ollamaService.generateResponse(for: text, context: fullContext) {
@@ -313,4 +351,5 @@ class WellbeingCoach: ObservableObject {
 
 // Global reference - will be set by SproutApp
 var globalVoiceAssistant: VoiceAssistant?
+var globalAppModeDetector: AppModeDetector?
 

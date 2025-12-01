@@ -7,6 +7,7 @@ struct SproutApp: App {
     @StateObject private var voiceAssistant = VoiceAssistant()
     @StateObject private var wellbeingCoach = WellbeingCoach()
     @StateObject private var menuBarManager = MenuBarManager()
+    @StateObject private var appModeDetector = AppModeDetector()
     
     init() {
         // Play startup sound
@@ -21,11 +22,13 @@ struct SproutApp: App {
                 .environmentObject(audioAnalyzer)
                 .environmentObject(voiceAssistant)
                 .environmentObject(wellbeingCoach)
+                .environmentObject(appModeDetector)
                 .background(TransparentBackground())
                 .frame(width: 300, height: 300)
                 .background(WindowAccessor())
                 .onAppear {
                     globalVoiceAssistant = voiceAssistant
+                    globalAppModeDetector = appModeDetector
                     // Setup menu bar
                     menuBarManager.setupMenuBar(voiceAssistant: voiceAssistant, wellbeingCoach: wellbeingCoach)
                 }
