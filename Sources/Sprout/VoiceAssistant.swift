@@ -504,8 +504,9 @@ class VoiceAssistant: ObservableObject {
                 audioPlayer.delegate = delegate
                 
                 // Store delegate reference to prevent deallocation
-                // Keep reference in a class property
-                self.audioPlayerDelegate = delegate
+                await MainActor.run {
+                    self.audioPlayerDelegate = delegate
+                }
                 
                 // Play audio
                 if audioPlayer.play() {
