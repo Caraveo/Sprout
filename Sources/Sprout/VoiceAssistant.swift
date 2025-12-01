@@ -255,10 +255,13 @@ class VoiceAssistant: ObservableObject {
         pauseTimer = Timer.scheduledTimer(withTimeInterval: pauseThreshold, repeats: false) { [weak self] _ in
             guard let self = self else { return }
             
-            // Pause detected - process accumulated text
+            // Pause detected - process accumulated text and stop listening temporarily
             if !self.accumulatedText.isEmpty {
-                self.processUserMessage(self.accumulatedText)
+                let textToProcess = self.accumulatedText
                 self.accumulatedText = ""
+                // Stop listening while processing (will restart after AI responds)
+                self.stopListening()
+                self.processUserMessage(textToProcess)
             }
         }
     }
@@ -409,6 +412,14 @@ class VoiceAssistant: ObservableObject {
         await MainActor.run {
             self.conversationHistory.append(assistantMessage)
             self.isSpeaking = false
+            
+            // Automatically restart listening after AI finishes speaking
+            // Wait a brief moment for the audio to finish playing
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                if !self.isListening && !self.isSpeaking {
+                    self.startListening()
+                }
+            }
         }
     }
     
