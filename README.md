@@ -20,6 +20,7 @@ A comprehensive SwiftUI voice assistant application that combines voice interact
 - Metal-capable GPU
 - Microphone access
 - Python 3.9+ (for OpenVoice service)
+- Ollama (optional, for AI responses) - Install from https://ollama.ai
 
 ## Setup
 
@@ -29,7 +30,24 @@ A comprehensive SwiftUI voice assistant application that combines voice interact
 swift build
 ```
 
-### 2. Setup OpenVoice Service
+### 2. Setup Ollama (Optional but Recommended)
+
+```bash
+# Install Ollama from https://ollama.ai or:
+brew install ollama
+
+# Start Ollama service
+ollama serve
+
+# Pull a model (in another terminal)
+ollama pull llama3.2
+# or
+ollama pull mistral
+```
+
+The app will automatically use Ollama if available, otherwise it will use simple rule-based responses.
+
+### 3. Setup OpenVoice Service
 
 ```bash
 # Install Python dependencies
@@ -49,7 +67,7 @@ python services/openvoice_service.py
 
 The OpenVoice service runs on port 6000 by default.
 
-### 3. Build and Run
+### 4. Build and Run
 
 ```bash
 # Debug build

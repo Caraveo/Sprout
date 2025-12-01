@@ -1,6 +1,7 @@
 import Foundation
 
 class WellbeingCoach: ObservableObject {
+    private let ollamaService = OllamaService()
     @Published var currentMood: Mood = .neutral
     @Published var breathingExerciseActive = false
     @Published var sessionActive = false
@@ -83,8 +84,17 @@ class WellbeingCoach: ObservableObject {
             return
         }
         
-        // Generate supportive response
-        let response = generateResponse(for: text)
+        // Try Ollama first, fallback to simple responses
+        var response: String
+        let moodContext = "Current mood: \(currentMood.rawValue). \(currentMood.emoji)"
+        
+        if let ollamaResponse = await ollamaService.generateResponse(for: text, context: moodContext) {
+            response = ollamaResponse
+        } else {
+            // Fallback to simple responses
+            response = generateResponse(for: text)
+        }
+        
         let emoji = getEmojiForResponse(response)
         
         await globalVoiceAssistant?.speak(response, emoji: emoji)
@@ -99,30 +109,30 @@ class WellbeingCoach: ObservableObject {
     private func generateResponse(for text: String) -> String {
         let lowerText = text.lowercased()
         
-        // Greetings
+        // Greetings - short and positive
         if lowerText.contains("hello") || lowerText.contains("hi") || lowerText.contains("hey") {
-            return "Hello! I'm here to support your mind wellbeing. How are you feeling today?"
+            return "Hello! I'm here to support you. How are you feeling?"
         }
         
-        // Mood responses
+        // Mood responses - brief and helpful
         if lowerText.contains("sad") || lowerText.contains("down") {
-            return "I hear you. It's okay to feel this way. Would you like to try a breathing exercise together? It can help create a moment of calm."
+            return "I hear you. It's okay to feel this way. Would you like to try a breathing exercise?"
         }
         
         if lowerText.contains("anxious") || lowerText.contains("worried") || lowerText.contains("stressed") {
-            return "I understand that feeling. Let's take a moment to ground ourselves. Try taking three deep breaths with me."
+            return "I understand. Let's take three deep breaths together - that can help ground us."
         }
         
         if lowerText.contains("tired") || lowerText.contains("exhausted") {
-            return "Rest is important for your wellbeing. Remember to be gentle with yourself. Would you like a short guided relaxation?"
+            return "Rest is important. Be gentle with yourself today."
         }
         
         if lowerText.contains("thank") {
-            return "You're so welcome! I'm here whenever you need support. Remember, taking care of your mind is a journey, not a destination."
+            return "You're so welcome! I'm here whenever you need support."
         }
         
-        // Default supportive response
-        return "I'm listening. Your feelings are valid. What would help you feel more grounded right now?"
+        // Default supportive response - short and positive
+        return "I'm listening. Your feelings matter. What would help you feel better right now?"
     }
     
     private func getEmojiForResponse(_ response: String) -> String {
