@@ -17,8 +17,10 @@ class VoiceAssistant: ObservableObject {
     
     // Conversation awareness
     private var pauseTimer: Timer?
+    private var silenceTimer: Timer?
     private var accumulatedText = ""
-    private let pauseThreshold: TimeInterval = 2.0 // 2 seconds of silence = pause
+    private let pauseThreshold: TimeInterval = 2.0 // 2 seconds of silence = pause and process
+    private let silenceStopThreshold: TimeInterval = 8.0 // 8 seconds of silence = stop listening
     private var lastSpeechTime: Date?
     
     struct ConversationMessage: Identifiable {
@@ -85,6 +87,8 @@ class VoiceAssistant: ObservableObject {
                     
                     // Reset pause timer - user is still speaking
                     self.resetPauseTimer()
+                    // Reset silence timer - user is speaking
+                    self.resetSilenceTimer()
                 }
                 
                 if result.isFinal {
@@ -93,6 +97,7 @@ class VoiceAssistant: ObservableObject {
                         self.accumulatedText = text
                         self.lastSpeechTime = Date()
                         self.startPauseTimer()
+                        self.startSilenceTimer() // Also start silence timer for auto-stop
                     }
                 }
             }
@@ -118,6 +123,8 @@ class VoiceAssistant: ObservableObject {
             try audioEngine.start()
             DispatchQueue.main.async {
                 self.isListening = true
+                // Start silence timer when listening begins
+                self.startSilenceTimer()
             }
             print("✅ Started listening")
         } catch {
@@ -128,6 +135,8 @@ class VoiceAssistant: ObservableObject {
     func stopListening() {
         pauseTimer?.invalidate()
         pauseTimer = nil
+        silenceTimer?.invalidate()
+        silenceTimer = nil
         
         audioEngine?.stop()
         audioEngine?.inputNode.removeTap(onBus: 0)
@@ -168,14 +177,35 @@ class VoiceAssistant: ObservableObject {
         }
     }
     
+    private func resetSilenceTimer() {
+        silenceTimer?.invalidate()
+        silenceTimer = nil
+    }
+    
+    private func startSilenceTimer() {
+        resetSilenceTimer()
+        
+        silenceTimer = Timer.scheduledTimer(withTimeInterval: silenceStopThreshold, repeats: false) { [weak self] _ in
+            guard let self = self else { return }
+            
+            // Long silence detected - stop listening automatically
+            if self.isListening {
+                self.stopListening()
+                
+                // Auto-restart listening after a brief pause
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                    self.startListening()
+                }
+            }
+        }
+    }
+    
     func handleTap() {
         if isListening {
-            // Small delay to allow any final recognition to complete
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                self.stopListening()
-            }
+            // Stop listening immediately when tapped
+            stopListening()
         } else {
-            // Small delay before starting to avoid immediate cancellation
+            // Start listening when tapped (if not already listening)
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
                 self.startListening()
             }
