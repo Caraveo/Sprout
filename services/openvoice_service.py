@@ -137,7 +137,7 @@ def synthesize():
             load_openvoice()
         
         # Use OpenVoice if available
-        if openvoice_model:
+        if openvoice_model and openvoice_model.get('base_speaker_tts') is not None:
             from scipy.io.wavfile import write
             import numpy as np
             import tempfile
@@ -213,13 +213,22 @@ def synthesize():
                     as_attachment=False
                 )
         else:
-            # OpenVoice models failed to load
-            error_msg = "OpenVoice models not loaded. Please download checkpoints."
+            # OpenVoice models failed to load - provide helpful error
+            error_msg = "OpenVoice models not loaded"
+            details = "Checkpoints missing or models failed to load. Check server console for details."
+            
             print(f"❌ {error_msg}")
-            print("   Run: ./download_checkpoints.sh for instructions")
+            print(f"   Details: {details}")
+            print("   To fix:")
+            print("   1. Run: ./download_checkpoints.sh for instructions")
+            print("   2. Download checkpoints from: https://github.com/myshell-ai/OpenVoice")
+            print("   3. Place in: checkpoints/base_speakers/EN/ and checkpoints/converter/")
+            print("   4. Restart the service")
+            
             return jsonify({
                 'error': error_msg,
-                'details': 'Checkpoints missing or models failed to load. See server logs for details.'
+                'details': details,
+                'help': 'Run ./download_checkpoints.sh for setup instructions'
             }), 503
             
     except Exception as e:
