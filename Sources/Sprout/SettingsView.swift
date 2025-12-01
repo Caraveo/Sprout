@@ -37,31 +37,73 @@ struct SettingsView: View {
                     // Local AI (Ollama) Section
                     SettingsSection(title: "Local AI (Ollama)", icon: "cpu") {
                         VStack(spacing: 16) {
+                            Toggle(isOn: $settings.ollamaAllowRemote) {
+                                VStack(alignment: .leading, spacing: 4) {
+                                    Text("Allow Remote Access")
+                                        .font(.system(size: 14, weight: .medium))
+                                    Text("Enable to use Ollama from other devices on your network")
+                                        .font(.caption)
+                                        .foregroundColor(.secondary)
+                                }
+                            }
+                            
                             SettingsRow(label: "Base URL") {
                                 TextField("http://localhost:11434", text: $settings.ollamaBaseURL)
                                     .textFieldStyle(.roundedBorder)
+                                    .help(settings.ollamaAllowRemote ? "Use your computer's IP address for remote access (e.g., http://192.168.1.100:11434)" : "Local Ollama instance URL")
                             }
                             
                             SettingsRow(label: "Model") {
-                                TextField("llama3.2", text: $settings.ollamaModel)
-                                    .textFieldStyle(.roundedBorder)
+                                if settings.availableOllamaModels.isEmpty {
+                                    TextField("llama3.2", text: $settings.ollamaModel)
+                                        .textFieldStyle(.roundedBorder)
+                                } else {
+                                    Picker("", selection: $settings.ollamaModel) {
+                                        ForEach(settings.availableOllamaModels, id: \.self) { model in
+                                            Text(model).tag(model)
+                                        }
+                                    }
+                                    .pickerStyle(.menu)
+                                    .frame(maxWidth: .infinity, alignment: .trailing)
+                                }
                             }
                             
-                            Button(action: testOllamaConnection) {
-                                HStack {
-                                    Image(systemName: "network")
-                                    Text("Test Connection")
-                                    if let status = testConnectionStatus {
-                                        Text(status)
-                                            .foregroundColor(status.contains("✅") ? .green : .red)
+                            HStack(spacing: 12) {
+                                Button(action: refreshOllamaModels) {
+                                    HStack {
+                                        Image(systemName: "arrow.clockwise")
+                                        Text("Refresh Models")
                                     }
+                                    .frame(maxWidth: .infinity)
+                                    .padding(.vertical, 10)
+                                    .background(Color.blue.opacity(0.1))
+                                    .cornerRadius(8)
                                 }
-                                .frame(maxWidth: .infinity)
-                                .padding(.vertical, 10)
-                                .background(Color.accentColor.opacity(0.1))
-                                .cornerRadius(8)
+                                .buttonStyle(PlainButtonStyle())
+                                
+                                Button(action: testOllamaConnection) {
+                                    HStack {
+                                        Image(systemName: "network")
+                                        Text("Test Connection")
+                                        if let status = testConnectionStatus {
+                                            Text(status)
+                                                .foregroundColor(status.contains("✅") ? .green : .red)
+                                        }
+                                    }
+                                    .frame(maxWidth: .infinity)
+                                    .padding(.vertical, 10)
+                                    .background(Color.accentColor.opacity(0.1))
+                                    .cornerRadius(8)
+                                }
+                                .buttonStyle(PlainButtonStyle())
                             }
-                            .buttonStyle(PlainButtonStyle())
+                            
+                            if !settings.availableOllamaModels.isEmpty {
+                                Text("\(settings.availableOllamaModels.count) model(s) available")
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                            }
                         }
                     }
                     
@@ -184,8 +226,14 @@ struct SettingsView: View {
                 .padding(24)
             }
         }
-        .frame(width: 600, height: 700)
+        .frame(width: 600, height: 750)
         .background(Color(NSColor.windowBackgroundColor))
+        .onAppear {
+            // Refresh models when settings view appears
+            Task {
+                await settings.refreshOllamaModels()
+            }
+        }
     }
     
     private func testOllamaConnection() {
@@ -199,6 +247,14 @@ struct SettingsView: View {
                     testConnectionStatus = nil
                 }
             }
+        }
+    }
+    
+    private func refreshOllamaModels() {
+        Task {
+            await settings.refreshOllamaModels()
+            // Also test connection when refreshing
+            testOllamaConnection()
         }
     }
     

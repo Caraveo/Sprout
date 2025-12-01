@@ -179,6 +179,42 @@ class OllamaService {
         }
     }
     
+    func listModels() async -> [String] {
+        guard let url = URL(string: "\(baseURL)/api/tags") else { return [] }
+        
+        var request = URLRequest(url: url)
+        request.httpMethod = "GET"
+        request.timeoutInterval = 10
+        
+        do {
+            let (data, response) = try await session.data(for: request)
+            
+            guard let httpResponse = response as? HTTPURLResponse,
+                  httpResponse.statusCode == 200 else {
+                let statusCode = (response as? HTTPURLResponse)?.statusCode ?? -1
+                print("❌ Ollama: Failed to list models - status \(statusCode)")
+                return []
+            }
+            
+            if let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+               let models = json["models"] as? [[String: Any]] {
+                let modelNames = models.compactMap { modelDict -> String? in
+                    if let modelInfo = modelDict["name"] as? String {
+                        // Ollama returns names like "llama3.2:latest" - extract base name
+                        return modelInfo.components(separatedBy: ":").first
+                    }
+                    return nil
+                }
+                return Array(Set(modelNames)).sorted() // Remove duplicates and sort
+            }
+            
+            return []
+        } catch {
+            print("❌ Ollama: Failed to list models - \(error.localizedDescription)")
+            return []
+        }
+    }
+    
     private func parseResponse(_ text: String) -> String? {
         // Parse format: "answer: ...\n\nanalysis: ..."
         let lines = text.components(separatedBy: "\n")

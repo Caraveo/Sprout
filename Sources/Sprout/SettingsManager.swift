@@ -52,6 +52,14 @@ class SettingsManager: ObservableObject {
         }
     }
     
+    @Published var ollamaAllowRemote: Bool {
+        didSet {
+            UserDefaults.standard.set(ollamaAllowRemote, forKey: "ollamaAllowRemote")
+        }
+    }
+    
+    @Published var availableOllamaModels: [String] = []
+    
     enum VoiceType: String, CaseIterable, Identifiable {
         case neutral = "neutral"
         case enthusiastic = "enthusiastic"
@@ -133,6 +141,9 @@ class SettingsManager: ObservableObject {
         } else {
             voiceType = .neutral
         }
+        
+        // Load remote access setting
+        ollamaAllowRemote = UserDefaults.standard.bool(forKey: "ollamaAllowRemote")
     }
     
     func resetToDefaults() {
@@ -144,6 +155,19 @@ class SettingsManager: ObservableObject {
         cloudModel = cloudProvider.defaultModel
         cloudBaseURL = cloudProvider.defaultBaseURL
         voiceType = .neutral
+        ollamaAllowRemote = false
+    }
+    
+    func refreshOllamaModels() async {
+        let service = OllamaService(baseURL: ollamaBaseURL, model: ollamaModel)
+        let models = await service.listModels()
+        await MainActor.run {
+            self.availableOllamaModels = models
+            // If current model is not in list, keep it (might be downloading)
+            if !models.isEmpty && !models.contains(ollamaModel) {
+                print("⚠️ Current model '\(ollamaModel)' not in available models list")
+            }
+        }
     }
 }
 
