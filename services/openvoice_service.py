@@ -108,8 +108,10 @@ def synthesize():
             tone_color_converter = openvoice_model['tone_color_converter']
             device = openvoice_model['device']
             
-            # Generate base speech
-            src_path = 'resources/audio/reference.wav'  # Default reference
+            # Generate base speech - try jon_reference first, then default
+            src_path = 'resources/audio/jon_reference.wav'  # Jon's voice
+            if not os.path.exists(src_path):
+                src_path = 'resources/audio/reference.wav'  # Fallback reference
             if not os.path.exists(src_path):
                 # Use MeloTTS to generate base
                 speaker_ids = tts_model.hps.data.spk2id
