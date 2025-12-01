@@ -120,7 +120,7 @@ class OllamaService {
         Be positive, supportive, and uplifting. Focus on mind wellbeing and self-care.
         """
         
-        let fullPrompt = "\(systemPrompt)\n\n\(prompt)\n\nSeedling!:"
+        let fullPrompt = "\(systemPrompt)\n\n\(prompt)\n\nSprout:"
         
         let body: [String: Any] = [
             "model": model,
