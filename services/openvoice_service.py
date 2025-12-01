@@ -35,20 +35,15 @@ def load_openvoice():
     try:
         print("🔧 Loading OpenVoice models...")
         
-        # Try different import paths
+        # Import se_extractor (it's a module, not a function)
         try:
-            from openvoice.se_extractor import get_se
-            se_extractor = type('obj', (object,), {'get_se': get_se})()
+            from openvoice import se_extractor
         except ImportError:
-            try:
-                from openvoice import se_extractor
-            except ImportError:
-                # Try direct import
-                import sys
-                openvoice_path = os.path.join(os.path.dirname(__file__), '..', 'openvoice')
-                sys.path.insert(0, openvoice_path)
-                from openvoice.se_extractor import get_se
-                se_extractor = type('obj', (object,), {'get_se': get_se})()
+            # Try direct import
+            import sys
+            openvoice_path = os.path.join(os.path.dirname(__file__), '..', 'openvoice')
+            sys.path.insert(0, openvoice_path)
+            from openvoice import se_extractor
         
         try:
             from openvoice.api import BaseSpeakerTTS, ToneColorConverter
