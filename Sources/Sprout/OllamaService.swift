@@ -83,6 +83,61 @@ class OllamaService {
         }
     }
     
+    func generateEncouragement(prompt: String) async -> String? {
+        guard let url = URL(string: "\(baseURL)/api/generate") else { return nil }
+        
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        
+        let systemPrompt = """
+        You are Seedling!, a kind and supportive mind wellbeing assistant. 
+        Give a brief, warm, and encouraging message (1-3 sentences max). 
+        Be positive, supportive, and uplifting. Focus on mind wellbeing and self-care.
+        """
+        
+        let fullPrompt = "\(systemPrompt)\n\n\(prompt)\n\nSeedling!:"
+        
+        let body: [String: Any] = [
+            "model": model,
+            "prompt": fullPrompt,
+            "stream": false,
+            "options": [
+                "temperature": 0.8,
+                "top_p": 0.9,
+                "max_tokens": 100,
+                "stop": ["User:", "Seedling!:"]
+            ]
+        ]
+        
+        request.httpBody = try? JSONSerialization.data(withJSONObject: body)
+        
+        do {
+            let (data, response) = try await session.data(for: request)
+            
+            guard let httpResponse = response as? HTTPURLResponse,
+                  httpResponse.statusCode == 200 else {
+                print("❌ Ollama encouragement error: \(response)")
+                return nil
+            }
+            
+            if let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+               let responseText = json["response"] as? String {
+                // Clean up the response - remove any "answer:" prefix if present
+                let cleaned = responseText.trimmingCharacters(in: .whitespacesAndNewlines)
+                if cleaned.lowercased().hasPrefix("answer:") {
+                    return String(cleaned.dropFirst("answer:".count)).trimmingCharacters(in: .whitespacesAndNewlines)
+                }
+                return cleaned
+            }
+            
+            return nil
+        } catch {
+            print("❌ Ollama encouragement request failed: \(error)")
+            return nil
+        }
+    }
+    
     func checkAvailability() async -> Bool {
         guard let url = URL(string: "\(baseURL)/api/tags") else { return false }
         

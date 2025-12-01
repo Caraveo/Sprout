@@ -39,9 +39,12 @@ class WellbeingCoach: ObservableObject {
         let emoji: String
     }
     
+    private var encouragementTimer: Timer?
+    
     init() {
         loadProgress()
         setupNotifications()
+        scheduleNextEncouragement()
     }
     
     private func setupNotifications() {
@@ -253,6 +256,58 @@ class WellbeingCoach: ObservableObject {
     
     private func loadProgress() {
         dailyStreak = UserDefaults.standard.integer(forKey: "dailyStreak")
+    }
+    
+    // Schedule random encouragement within the next hour
+    private func scheduleNextEncouragement() {
+        // Cancel any existing timer
+        encouragementTimer?.invalidate()
+        
+        // Pick a random time within the next hour (1-60 minutes)
+        let randomMinutes = Int.random(in: 1...60)
+        let randomSeconds = Int.random(in: 0...59)
+        let delay = TimeInterval(randomMinutes * 60 + randomSeconds)
+        
+        print("🌱 Scheduled encouragement in \(randomMinutes) minutes \(randomSeconds) seconds")
+        
+        encouragementTimer = Timer.scheduledTimer(withTimeInterval: delay, repeats: false) { [weak self] _ in
+            Task {
+                await self?.giveEncouragement()
+            }
+            // Schedule the next one for the next hour
+            self?.scheduleNextEncouragement()
+        }
+    }
+    
+    private func giveEncouragement() async {
+        // Generate a positive, encouraging message using Ollama
+        let encouragementPrompts = [
+            "Give a brief, warm encouragement about taking care of mind wellbeing. Be positive and supportive.",
+            "Share a short, uplifting message about self-care and emotional wellness.",
+            "Offer a kind reminder about being gentle with oneself and practicing mindfulness.",
+            "Give a brief, encouraging note about the importance of taking breaks and checking in with oneself."
+        ]
+        
+        let prompt = encouragementPrompts.randomElement() ?? encouragementPrompts[0]
+        
+        // Use Ollama to generate encouragement
+        if let encouragement = await ollamaService.generateEncouragement(prompt: prompt) {
+            let emoji = getEmojiForResponse(encouragement)
+            await globalVoiceAssistant?.speak(encouragement, emoji: emoji)
+            print("💚 Delivered encouragement: \(encouragement)")
+        } else {
+            // Fallback encouragement
+            let fallbackMessages = [
+                "Just a gentle reminder - you're doing great, and it's okay to take things one step at a time.",
+                "Remember to be kind to yourself today. You're doing your best, and that's enough.",
+                "Take a moment to appreciate how far you've come. You're stronger than you know.",
+                "A little reminder: it's okay to pause, breathe, and check in with how you're feeling."
+            ]
+            let message = fallbackMessages.randomElement() ?? fallbackMessages[0]
+            let emoji = "🌱"
+            await globalVoiceAssistant?.speak(message, emoji: emoji)
+            print("💚 Delivered fallback encouragement: \(message)")
+        }
     }
 }
 

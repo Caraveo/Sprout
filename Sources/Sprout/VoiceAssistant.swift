@@ -26,6 +26,9 @@ class VoiceAssistant: ObservableObject {
     private var lastSpeechTime: Date?
     private var noSpeechErrorCount = 0
     
+    // TTS control
+    private var currentSynthesizer: AVSpeechSynthesizer?
+    
     struct ConversationMessage: Identifiable {
         let id = UUID()
         let text: String
@@ -304,6 +307,13 @@ class VoiceAssistant: ObservableObject {
     }
     
     func handleTap() {
+        // If speaking, stop speaking first
+        if isSpeaking {
+            stopSpeaking()
+            return
+        }
+        
+        // Otherwise, toggle listening on tap
         if isListening {
             // Stop listening immediately when tapped
             stopListening()
@@ -409,6 +419,7 @@ class VoiceAssistant: ObservableObject {
         utterance.rate = 0.5
         
         let synthesizer = AVSpeechSynthesizer()
+        currentSynthesizer = synthesizer
         var delegate: SpeechDelegate?
         
         await withCheckedContinuation { continuation in
@@ -438,6 +449,18 @@ class VoiceAssistant: ObservableObject {
         // Clean up
         synthesizer.delegate = nil
         delegate = nil
+        currentSynthesizer = nil
+    }
+    
+    func stopSpeaking() {
+        Task { @MainActor in
+            if isSpeaking {
+                currentSynthesizer?.stopSpeaking(at: .immediate)
+                currentSynthesizer = nil
+                isSpeaking = false
+                print("🛑 Speech stopped by user")
+            }
+        }
     }
     
     private func playAudio(_ data: Data) async {
