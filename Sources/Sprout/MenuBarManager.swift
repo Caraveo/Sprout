@@ -23,13 +23,13 @@ class MenuBarManager: ObservableObject {
         
         // Create popover with menu content
         let popover = NSPopover()
-        popover.contentSize = NSSize(width: 320, height: 500)
+        popover.contentSize = NSSize(width: 340, height: 520)
         popover.behavior = .transient
         popover.contentViewController = NSHostingController(
             rootView: MenuBarView()
                 .environmentObject(voiceAssistant)
                 .environmentObject(wellbeingCoach)
-                .frame(width: 320, height: 500)
+                .frame(width: 340, height: 520)
         )
         self.popover = popover
     }
@@ -70,17 +70,20 @@ struct MenuBarView: View {
                         .foregroundColor(.primary)
                     Spacer()
                 }
-                .padding(.top, 16)
-                .padding(.horizontal, 16)
+                .padding(.top, 20)
+                .padding(.horizontal, 20)
+                .padding(.bottom, 8)
                 
                 Divider()
-                    .padding(.vertical, 4)
+                    .padding(.vertical, 8)
+                    .padding(.horizontal, 20)
                 
                 // Mood section
                 VStack(alignment: .leading, spacing: 16) {
                     Text("Current Mood")
                         .font(.system(size: 14, weight: .semibold))
                         .foregroundColor(.primary)
+                        .padding(.bottom, 4)
                     
                     HStack(spacing: 16) {
                         ForEach(WellbeingCoach.Mood.allCases, id: \.self) { mood in
@@ -102,17 +105,19 @@ struct MenuBarView: View {
                         }
                     }
                 }
-                .padding(.horizontal, 16)
-                .padding(.vertical, 4)
+                .padding(.horizontal, 20)
+                .padding(.vertical, 12)
                 
                 Divider()
-                    .padding(.vertical, 4)
+                    .padding(.vertical, 8)
+                    .padding(.horizontal, 20)
                 
                 // Quick actions
                 VStack(alignment: .leading, spacing: 16) {
                     Text("Quick Actions")
                         .font(.system(size: 14, weight: .semibold))
                         .foregroundColor(.primary)
+                        .padding(.bottom, 4)
                     
                     VStack(spacing: 12) {
                         MenuBarActionButton(
@@ -148,17 +153,19 @@ struct MenuBarView: View {
                         }
                     }
                 }
-                .padding(.horizontal, 16)
-                .padding(.vertical, 4)
+                .padding(.horizontal, 20)
+                .padding(.vertical, 12)
                 
                 Divider()
-                    .padding(.vertical, 4)
+                    .padding(.vertical, 8)
+                    .padding(.horizontal, 20)
                 
                 // Progress section
                 VStack(alignment: .leading, spacing: 16) {
                     Text("Your Progress")
                         .font(.system(size: 14, weight: .semibold))
                         .foregroundColor(.primary)
+                        .padding(.bottom, 4)
                     
                     HStack(spacing: 24) {
                         VStack(alignment: .leading, spacing: 6) {
@@ -182,12 +189,13 @@ struct MenuBarView: View {
                         }
                     }
                 }
-                .padding(.horizontal, 16)
-                .padding(.vertical, 4)
+                .padding(.horizontal, 20)
+                .padding(.vertical, 12)
                 
                 // View full log button
                 Divider()
-                    .padding(.vertical, 4)
+                    .padding(.vertical, 8)
+                    .padding(.horizontal, 20)
                 
                 Button(action: {
                     // Open conversation log in a new window
@@ -215,24 +223,26 @@ struct MenuBarView: View {
                             .font(.system(size: 12))
                             .foregroundColor(.secondary)
                     }
-                    .padding(.horizontal, 14)
-                    .padding(.vertical, 12)
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 14)
                     .background(Color.accentColor.opacity(0.1))
                     .cornerRadius(8)
                 }
                 .buttonStyle(PlainButtonStyle())
-                .padding(.horizontal, 16)
-                .padding(.vertical, 4)
+                .padding(.horizontal, 20)
+                .padding(.vertical, 8)
                 
                 // Recent conversations preview
                 if !voiceAssistant.conversationHistory.isEmpty {
                     Divider()
-                        .padding(.vertical, 4)
+                        .padding(.vertical, 8)
+                        .padding(.horizontal, 20)
                     
                     VStack(alignment: .leading, spacing: 16) {
                         Text("Recent")
                             .font(.system(size: 14, weight: .semibold))
                             .foregroundColor(.primary)
+                            .padding(.bottom, 4)
                         
                         VStack(spacing: 12) {
                             ForEach(voiceAssistant.conversationHistory.suffix(2)) { message in
@@ -240,15 +250,15 @@ struct MenuBarView: View {
                             }
                         }
                     }
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 4)
+                    .padding(.horizontal, 20)
+                    .padding(.vertical, 12)
                 }
                 
                 Spacer()
             }
-            .padding(.bottom, 16)
+            .padding(.bottom, 20)
         }
-        .frame(width: 320, height: 500)
+        .frame(width: 340, height: 520)
     }
 }
 
