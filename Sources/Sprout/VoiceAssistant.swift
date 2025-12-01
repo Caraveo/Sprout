@@ -466,8 +466,27 @@ class VoiceAssistant: ObservableObject {
     func stopSpeaking() {
         Task { @MainActor in
             if isSpeaking {
-                currentSynthesizer?.stopSpeaking(at: .immediate)
-                currentSynthesizer = nil
+                // Stop system TTS
+                if let synthesizer = currentSynthesizer, synthesizer.isSpeaking {
+                    synthesizer.stopSpeaking(at: .immediate)
+                    currentSynthesizer = nil
+                }
+                
+                // Stop OpenVoice audio playback
+                if let player = currentAudioPlayer, player.isPlaying {
+                    player.stop()
+                    currentAudioPlayer = nil
+                    
+                    // Resume continuation if it exists (fixes leak)
+                    if let continuation = audioContinuation {
+                        continuation.resume()
+                        audioContinuation = nil
+                    }
+                }
+                
+                // Clean up delegate
+                audioPlayerDelegate = nil
+                
                 isSpeaking = false
                 print("🛑 Speech stopped by user")
             }
@@ -477,34 +496,51 @@ class VoiceAssistant: ObservableObject {
     private func playAudio(_ data: Data) async {
         // Play audio data from OpenVoice using AVAudioPlayer
         return await withCheckedContinuation { continuation in
+            // Store continuation so it can be resumed if stopped early
+            self.audioContinuation = continuation
+            
             do {
                 let audioPlayer = try AVAudioPlayer(data: data)
                 audioPlayer.prepareToPlay()
                 
+                // Store player reference
+                self.currentAudioPlayer = audioPlayer
+                
                 // Use delegate to know when playback finishes
                 class AudioDelegate: NSObject, AVAudioPlayerDelegate {
-                    let continuation: CheckedContinuation<Void, Never>
+                    weak var voiceAssistant: VoiceAssistant?
                     
-                    init(continuation: CheckedContinuation<Void, Never>) {
-                        self.continuation = continuation
+                    init(voiceAssistant: VoiceAssistant) {
+                        self.voiceAssistant = voiceAssistant
                     }
                     
                     func audioPlayerDidFinishPlaying(_ player: AVAudioPlayer, successfully flag: Bool) {
-                        continuation.resume()
+                        // Resume continuation and clean up
+                        if let continuation = voiceAssistant?.audioContinuation {
+                            continuation.resume()
+                            voiceAssistant?.audioContinuation = nil
+                        }
+                        voiceAssistant?.currentAudioPlayer = nil
+                        voiceAssistant?.audioPlayerDelegate = nil
                     }
                     
                     func audioPlayerDecodeErrorDidOccur(_ player: AVAudioPlayer, error: Error?) {
                         print("❌ OpenVoice: Audio decode error - \(error?.localizedDescription ?? "unknown")")
-                        continuation.resume()
+                        // Resume continuation and clean up
+                        if let continuation = voiceAssistant?.audioContinuation {
+                            continuation.resume()
+                            voiceAssistant?.audioContinuation = nil
+                        }
+                        voiceAssistant?.currentAudioPlayer = nil
+                        voiceAssistant?.audioPlayerDelegate = nil
                     }
                 }
                 
-                let delegate = AudioDelegate(continuation: continuation)
+                let delegate = AudioDelegate(voiceAssistant: self)
                 audioPlayer.delegate = delegate
                 
                 // Store delegate reference to prevent deallocation
-                // Use a local variable to keep reference alive
-                let _ = delegate
+                self.audioPlayerDelegate = delegate
                 
                 // Play audio
                 if audioPlayer.play() {
@@ -512,19 +548,28 @@ class VoiceAssistant: ObservableObject {
                 } else {
                     print("❌ OpenVoice: Failed to start playback")
                     continuation.resume()
+                    self.audioContinuation = nil
+                    self.currentAudioPlayer = nil
+                    self.audioPlayerDelegate = nil
                 }
                 
                 // Timeout safety
-                Task {
+                Task { [weak self] in
                     try? await Task.sleep(nanoseconds: 30_000_000_000) // 30 seconds max
-                    if audioPlayer.isPlaying {
-                        audioPlayer.stop()
-                        continuation.resume()
+                    if let player = self?.currentAudioPlayer, player.isPlaying {
+                        player.stop()
+                        if let continuation = self?.audioContinuation {
+                            continuation.resume()
+                            self?.audioContinuation = nil
+                        }
+                        self?.currentAudioPlayer = nil
+                        self?.audioPlayerDelegate = nil
                     }
                 }
             } catch {
                 print("❌ OpenVoice: Failed to create audio player - \(error.localizedDescription)")
                 continuation.resume()
+                self.audioContinuation = nil
             }
         }
     }
