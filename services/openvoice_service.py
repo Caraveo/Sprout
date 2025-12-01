@@ -155,57 +155,97 @@ def synthesize():
             if not os.path.exists(src_path):
                 src_path = os.path.join(project_root, 'resources', 'audio', 'reference.wav')  # Fallback reference
             if not os.path.exists(src_path):
-                # Use MeloTTS to generate base
-                speaker_ids = tts_model.hps.data.spk2id
-                speaker_id = speaker_ids.get('EN-US', 0)
-                
-                speed = 1.0
-                output_path = tempfile.mktemp(suffix='.wav')
-                tts_model.tts_to_file(text, speaker_id, output_path, speed=speed)
-                
-                # Clone voice
-                tgt_path = tempfile.mktemp(suffix='.wav')
-                encode_message = "@MyShell"
-                se, audio_name = se_extractor.get_se(output_path, tone_color_converter, vad_model=None)
-                
-                speaker_src = base_speaker_tts.tts(text, src_path, language=language)
-                speaker_tgt = tone_color_converter.convert(
-                    audio_src=speaker_src,
-                    src_se=se,
-                    tgt_se=se,
-                    output_path=tgt_path
-                )
-                
-                # Read and return audio
-                with open(tgt_path, 'rb') as f:
-                    audio_data = f.read()
-                
-                os.remove(tgt_path)
-                os.remove(output_path)
-                
-                return send_file(
-                    io.BytesIO(audio_data),
-                    mimetype='audio/wav',
-                    as_attachment=False
-                )
+                # No reference audio - use MeloTTS if available, otherwise use base speaker only
+                if tts_model is not None:
+                    # Use MeloTTS to generate base speech
+                    speaker_ids = tts_model.hps.data.spk2id
+                    speaker_id = speaker_ids.get('EN-US', 0)
+                    
+                    speed = 1.0
+                    tmp_src_path = tempfile.mktemp(suffix='.wav')
+                    tts_model.tts_to_file(text, speaker_id, tmp_src_path, speed=speed)
+                    
+                    # Extract embeddings from generated audio
+                    source_se, _ = se_extractor.get_se(tmp_src_path, tone_color_converter, vad_model=None)
+                    target_se = source_se  # Use same embedding if no reference
+                    
+                    # Convert tone (will just pass through since src_se == tgt_se)
+                    tgt_path = tempfile.mktemp(suffix='.wav')
+                    encode_message = "@MyShell"
+                    tone_color_converter.convert(
+                        audio_src_path=tmp_src_path,
+                        src_se=source_se,
+                        tgt_se=target_se,
+                        output_path=tgt_path,
+                        message=encode_message
+                    )
+                    
+                    # Read and return audio
+                    with open(tgt_path, 'rb') as f:
+                        audio_data = f.read()
+                    
+                    os.remove(tgt_path)
+                    os.remove(tmp_src_path)
+                    
+                    return send_file(
+                        io.BytesIO(audio_data),
+                        mimetype='audio/wav',
+                        as_attachment=False
+                    )
+                else:
+                    # Fallback: use base speaker TTS only (no voice cloning)
+                    tmp_src_path = tempfile.mktemp(suffix='.wav')
+                    base_speaker_tts.tts(text, tmp_src_path, speaker='default', language='English', speed=1.0)
+                    
+                    with open(tmp_src_path, 'rb') as f:
+                        audio_data = f.read()
+                    
+                    os.remove(tmp_src_path)
+                    
+                    return send_file(
+                        io.BytesIO(audio_data),
+                        mimetype='audio/wav',
+                        as_attachment=False
+                    )
             else:
                 # Use reference voice (Jon's voice)
                 print(f"🎤 Using reference voice: {src_path}")
-                speaker_src = base_speaker_tts.tts(text, src_path, language=language)
-                se, audio_name = se_extractor.get_se(src_path, tone_color_converter, vad_model=None)
                 
+                # Step 1: Generate base speech from text
+                tmp_src_path = tempfile.mktemp(suffix='.wav')
+                base_speaker_tts.tts(text, tmp_src_path, speaker='default', language='English', speed=1.0)
+                
+                # Step 2: Extract target speaker embedding from reference audio
+                target_se, audio_name = se_extractor.get_se(src_path, tone_color_converter, vad_model=None)
+                
+                # Step 3: Load source speaker embedding (default English speaker)
+                source_se_path = os.path.join(project_root, 'checkpoints', 'base_speakers', 'EN', 'en_default_se.pth')
+                if not os.path.exists(source_se_path):
+                    # Fallback: try to extract from generated audio (less ideal)
+                    print("⚠️  en_default_se.pth not found, extracting from generated audio")
+                    source_se, _ = se_extractor.get_se(tmp_src_path, tone_color_converter, vad_model=None)
+                else:
+                    import torch
+                    source_se = torch.load(source_se_path, map_location=device)
+                
+                # Step 4: Convert tone color
                 tgt_path = tempfile.mktemp(suffix='.wav')
-                speaker_tgt = tone_color_converter.convert(
-                    audio_src=speaker_src,
-                    src_se=se,
-                    tgt_se=se,
-                    output_path=tgt_path
+                encode_message = "@MyShell"
+                tone_color_converter.convert(
+                    audio_src_path=tmp_src_path,
+                    src_se=source_se,
+                    tgt_se=target_se,
+                    output_path=tgt_path,
+                    message=encode_message
                 )
                 
+                # Step 5: Read and return audio
                 with open(tgt_path, 'rb') as f:
                     audio_data = f.read()
                 
+                # Cleanup
                 os.remove(tgt_path)
+                os.remove(tmp_src_path)
                 
                 return send_file(
                     io.BytesIO(audio_data),
