@@ -151,6 +151,7 @@ def synthesize():
                     
                     speed = 1.1  # 10% faster
                     tmp_src_path = tempfile.mktemp(suffix='.wav')
+                    # Note: MeloTTS doesn't support emotion styles, so we use base speed
                     tts_model.tts_to_file(text, speaker_id, tmp_src_path, speed=speed)
                     
                     # Extract embeddings from generated audio
