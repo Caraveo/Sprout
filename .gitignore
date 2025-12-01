@@ -44,3 +44,15 @@ logs/*.log
 *.swo
 *~
 
+
+# Python virtual environments
+openvoice_env/
+venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+*.dylib
+*.dll
