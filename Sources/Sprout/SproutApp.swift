@@ -64,7 +64,7 @@ struct WindowAccessor: NSViewRepresentable {
         window.isOpaque = false
         window.hasShadow = true
         window.level = .floating
-        window.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .moveToActiveSpace]
+        window.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]
         window.ignoresMouseEvents = false
         window.styleMask = [.borderless, .fullSizeContentView]
         window.titlebarAppearsTransparent = true
