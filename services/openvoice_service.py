@@ -4,10 +4,14 @@ OpenVoice Service for Sprout
 Provides voice synthesis and cloning capabilities via HTTP API
 """
 
+# Fix OpenMP duplicate library error
+import os
+os.environ['KMP_DUPLICATE_LIB_OK'] = 'TRUE'
+os.environ['OMP_NUM_THREADS'] = '1'
+
 from flask import Flask, request, jsonify, send_file
 from flask_cors import CORS
 import io
-import os
 import sys
 import json
 
