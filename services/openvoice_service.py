@@ -149,7 +149,7 @@ def synthesize():
                     speaker_ids = tts_model.hps.data.spk2id
                     speaker_id = speaker_ids.get('EN-US', 0)
                     
-                    speed = 1.0
+                    speed = 1.1  # 10% faster
                     tmp_src_path = tempfile.mktemp(suffix='.wav')
                     tts_model.tts_to_file(text, speaker_id, tmp_src_path, speed=speed)
                     
@@ -183,7 +183,7 @@ def synthesize():
                 else:
                     # Fallback: use base speaker TTS only (no voice cloning)
                     tmp_src_path = tempfile.mktemp(suffix='.wav')
-                    base_speaker_tts.tts(text, tmp_src_path, speaker='default', language='English', speed=1.0)
+                    base_speaker_tts.tts(text, tmp_src_path, speaker='default', language='English', speed=1.1)  # 10% faster
                     
                     with open(tmp_src_path, 'rb') as f:
                         audio_data = f.read()
@@ -201,7 +201,7 @@ def synthesize():
                 
                 # Step 1: Generate base speech from text
                 tmp_src_path = tempfile.mktemp(suffix='.wav')
-                base_speaker_tts.tts(text, tmp_src_path, speaker='default', language='English', speed=1.0)
+                base_speaker_tts.tts(text, tmp_src_path, speaker='default', language='English', speed=1.1)  # 10% faster
                 
                 # Step 2: Extract target speaker embedding from reference audio
                 target_se, audio_name = get_se(src_path, tone_color_converter, vad=True)

@@ -430,7 +430,7 @@ class VoiceAssistant: ObservableObject {
     private func speakWithSystemTTS(_ text: String) async {
         let utterance = AVSpeechUtterance(string: text)
         utterance.voice = AVSpeechSynthesisVoice(language: "en-US")
-        utterance.rate = 0.5
+        utterance.rate = 0.55  // 10% faster (was 0.5)
         
         let synthesizer = AVSpeechSynthesizer()
         currentSynthesizer = synthesizer
