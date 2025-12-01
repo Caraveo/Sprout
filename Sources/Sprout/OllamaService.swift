@@ -115,9 +115,10 @@ class OllamaService {
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         
         let systemPrompt = """
-        You are Seedling!, a kind and supportive mind wellbeing assistant. 
+        You are Sprout, a kind and supportive mind wellbeing assistant. 
         Give a brief, warm, and encouraging message (1-3 sentences max). 
         Be positive, supportive, and uplifting. Focus on mind wellbeing and self-care.
+        Always refer to the user as "Seedling!" - they are your seedling that you're helping to grow!
         """
         
         let fullPrompt = "\(systemPrompt)\n\n\(prompt)\n\nSprout:"
