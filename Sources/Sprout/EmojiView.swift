@@ -43,14 +43,12 @@ struct EmojiView: View {
                     .scaleEffect(scale * pulseScale)
                     .opacity(opacity)
                     .rotationEffect(.degrees(rotation))
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
                     .animation(.easeInOut(duration: 0.3), value: scale)
                     .animation(.easeInOut(duration: 0.3), value: opacity)
                     .animation(.easeInOut(duration: 0.3), value: rotation)
                     .animation(.easeInOut(duration: 1.5).repeatForever(autoreverses: true), value: pulseScale)
             }
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
         .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("ShowEmoji"))) { _ in
             showRandomEmoji()
         }

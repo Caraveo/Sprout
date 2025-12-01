@@ -206,56 +206,8 @@ class MetalRenderer: NSObject, MTKViewDelegate {
             float2 coord = (uv - 0.5) * 2.0;
             coord.x *= resolution.x / resolution.y;
             
-            // Position orb at bottom of window (offset Y downward)
-            float baseYOffset = -0.65; // Move to bottom of window
-            
-            // Smooth vertical movement that reacts to audio
-            // When audio is detected, orb rises FAST, then falls back naturally (slower)
-            float audioReaction = audioIntensity * 0.9 + audioLevel * 0.5;
-            
-            // Create asymmetric bounce: FAST up, SLOW down
-            // Use separate speeds for upward and downward movement
-            float upSpeed = 7.0 + audioReaction * 3.0; // 2x faster upward movement (was 3.5)
-            float downSpeed = 1.2; // Slower, natural downward movement (fixed)
-            
-            // Calculate phase with different speeds for up vs down
-            float bouncePhase = time;
-            float sineWave = sin(bouncePhase * (upSpeed + downSpeed) * 0.5) * 0.5 + 0.5; // 0 to 1
-            
-            // Create asymmetric movement: fast rise, slow fall
-            // Use power curve to make upward movement faster
-            float asymmetricBounce;
-            if (sineWave < 0.5) {
-                // Upward phase (0 to 0.5) - make it MUCH faster
-                // Use power curve to accelerate upward movement
-                float normalizedUp = sineWave / 0.5; // 0 to 1
-                asymmetricBounce = pow(normalizedUp, 0.4) * 0.5; // Fast acceleration (0 to 0.5)
-            } else {
-                // Downward phase (0.5 to 1.0) - keep it slower
-                // Use gentler curve for natural fall
-                float normalizedDown = (sineWave - 0.5) / 0.5; // 0 to 1
-                asymmetricBounce = 0.5 + pow(normalizedDown, 1.2) * 0.5; // Slower, natural fall (0.5 to 1.0)
-            }
-            
-            // Clamp to 0-1 range
-            asymmetricBounce = clamp(asymmetricBounce, 0.0, 1.0);
-            
-            // Apply easing for smooth, natural movement
-            float easedBounce = smoothstep(0.0, 1.0, asymmetricBounce);
-            
-            // Vertical offset: base position + bounce amount scaled by audio reaction
-            // Maximum rise is about 0.4 units when fully reactive
-            float verticalOffset = baseYOffset + (easedBounce * audioReaction * 0.4);
-            
-            // Add subtle continuous gentle movement even when quiet (very subtle)
-            float gentleFloat = sin(time * 0.3) * 0.05 * (1.0 - audioReaction * 0.7);
-            verticalOffset += gentleFloat;
-            
-            // Apply vertical offset to position orb
-            coord.y += verticalOffset;
-            
-            // Scale down the orb to fit better in the window
-            coord /= 0.32;
+            // Scale down the orb to fit better in the window (20% smaller)
+            coord /= 0.4;
             
             float angle = atan2(coord.y, coord.x);
             float dist = length(coord);

@@ -7,6 +7,31 @@ struct VoiceAssistantView: View {
     
     var body: some View {
         VStack(spacing: 8) {
+            // Status indicator - always visible when active
+            if voiceAssistant.isListening || voiceAssistant.isSpeaking {
+                HStack(spacing: 6) {
+                    if voiceAssistant.isListening {
+                        Circle()
+                            .fill(Color.red)
+                            .frame(width: 8, height: 8)
+                        Text("Listening...")
+                            .font(.system(size: 11, weight: .medium))
+                            .foregroundColor(.white)
+                    } else if voiceAssistant.isSpeaking {
+                        Image(systemName: "waveform")
+                            .font(.system(size: 9))
+                            .foregroundColor(.white)
+                        Text("Speaking...")
+                            .font(.system(size: 11, weight: .medium))
+                            .foregroundColor(.white)
+                    }
+                }
+                .padding(.horizontal, 10)
+                .padding(.vertical, 4)
+                .background(voiceAssistant.isListening ? Color.red.opacity(0.6) : Color.blue.opacity(0.6))
+                .cornerRadius(12)
+            }
+            
             // Transcription text - show/hide with animation
             if showTranscription && !voiceAssistant.currentMessage.isEmpty {
                 Text(voiceAssistant.currentMessage)
