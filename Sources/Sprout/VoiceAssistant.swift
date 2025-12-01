@@ -359,7 +359,7 @@ class VoiceAssistant: ObservableObject {
         // Get last 5 messages for context (excluding current one)
         let recentMessages = conversationHistory.suffix(5)
         return recentMessages.map { msg in
-            let role = msg.isUser ? "User" : "Seedling!"
+            let role = msg.isUser ? "Seedling!" : "Sprout"
             return "\(role): \(msg.text)"
         }.joined(separator: "\n")
     }

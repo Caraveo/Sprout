@@ -108,7 +108,7 @@ struct ConversationLogItem: View {
                         Text(emoji)
                             .font(.system(size: 14))
                     }
-                    Text(message.isUser ? "You" : "Seedling!")
+                    Text(message.isUser ? "Seedling!" : "Sprout")
                         .font(.system(size: 12, weight: .semibold))
                         .foregroundColor(message.isUser ? .blue : .green)
                     
