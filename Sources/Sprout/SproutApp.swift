@@ -6,6 +6,7 @@ struct SproutApp: App {
     @StateObject private var audioAnalyzer = AudioAnalyzer()
     @StateObject private var voiceAssistant = VoiceAssistant()
     @StateObject private var wellbeingCoach = WellbeingCoach()
+    @StateObject private var menuBarManager = MenuBarManager()
     
     init() {
         // Play startup sound
@@ -25,6 +26,8 @@ struct SproutApp: App {
                 .background(WindowAccessor())
                 .onAppear {
                     globalVoiceAssistant = voiceAssistant
+                    // Setup menu bar
+                    menuBarManager.setupMenuBar(voiceAssistant: voiceAssistant, wellbeingCoach: wellbeingCoach)
                 }
         }
         .windowResizability(.contentSize)

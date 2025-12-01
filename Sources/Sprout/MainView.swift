@@ -7,7 +7,6 @@ struct MainView: View {
     @EnvironmentObject var voiceAssistant: VoiceAssistant
     @EnvironmentObject var wellbeingCoach: WellbeingCoach
     @State private var renderer: MetalRenderer?
-    @State private var showingDashboard = false
     
     var body: some View {
         ZStack {
@@ -16,28 +15,18 @@ struct MainView: View {
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
             
             VStack(spacing: 0) {
-                // Header with title
+                // Header with title (simplified - menu moved to menu bar)
                 HStack {
                     Text("🌱 Sprout")
                         .font(.system(size: 24, weight: .bold))
                         .foregroundColor(.white)
                     Spacer()
-                    Button(action: { showingDashboard.toggle() }) {
-                        Image(systemName: showingDashboard ? "xmark.circle.fill" : "chart.bar.fill")
-                            .foregroundColor(.white)
-                            .font(.system(size: 20))
-                    }
-                    .buttonStyle(PlainButtonStyle())
                 }
                 .padding()
                 .background(Color.black.opacity(0.3))
                 
-                if showingDashboard {
-                    WellbeingDashboard()
-                        .transition(.move(edge: .top).combined(with: .opacity))
-                } else {
-                    // Main content area
-                    ZStack {
+                // Main content area
+                ZStack {
                         // Metal orb view
                         MetalView(renderer: $renderer)
                             .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -86,7 +75,6 @@ struct MainView: View {
                             )
                             voiceAssistant.handleTap()
                         })
-                    }
                 }
             }
         }
