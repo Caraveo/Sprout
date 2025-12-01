@@ -33,52 +33,86 @@ def load_openvoice():
         return
     
     try:
+        print("🔧 Loading OpenVoice models...")
+        
         # Try different import paths
         try:
-            from openvoice import se_extractor
+            from openvoice.se_extractor import get_se
+            se_extractor = type('obj', (object,), {'get_se': get_se})()
         except ImportError:
-            from openvoice.se_extractor import se_extractor
+            try:
+                from openvoice import se_extractor
+            except ImportError:
+                # Try direct import
+                import sys
+                openvoice_path = os.path.join(os.path.dirname(__file__), '..', 'openvoice')
+                sys.path.insert(0, openvoice_path)
+                from openvoice.se_extractor import get_se
+                se_extractor = type('obj', (object,), {'get_se': get_se})()
         
         try:
             from openvoice.api import BaseSpeakerTTS, ToneColorConverter
         except ImportError:
             # Try alternative import
             import sys
-            sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'openvoice'))
+            openvoice_path = os.path.join(os.path.dirname(__file__), '..', 'openvoice')
+            sys.path.insert(0, openvoice_path)
             from openvoice.api import BaseSpeakerTTS, ToneColorConverter
         
-        # MeloTTS is optional for V2
+        # MeloTTS is optional - don't fail if not available
         try:
             from melo.api import TTS
+            tts_model = TTS(language='EN', device='cpu')
+            print("✅ MeloTTS loaded")
         except ImportError:
+            print("⚠️ MeloTTS not available, will use base TTS only")
             TTS = None
+            tts_model = None
         
-        # Load models
-        ckpt_base = 'checkpoints/base_speakers/EN'
-        ckpt_converter = 'checkpoints/converter'
+        # Load models - check if checkpoints exist
+        script_dir = os.path.dirname(os.path.abspath(__file__))
+        project_root = os.path.dirname(script_dir)
+        ckpt_base = os.path.join(project_root, 'checkpoints', 'base_speakers', 'EN')
+        ckpt_converter = os.path.join(project_root, 'checkpoints', 'converter')
+        
+        if not os.path.exists(ckpt_base):
+            print(f"❌ Base speaker checkpoints not found at: {ckpt_base}")
+            print("   Please download checkpoints from: https://github.com/myshell-ai/OpenVoice")
+            raise FileNotFoundError(f"Checkpoints not found: {ckpt_base}")
+        
+        if not os.path.exists(ckpt_converter):
+            print(f"❌ Converter checkpoints not found at: {ckpt_converter}")
+            print("   Please download checkpoints from: https://github.com/myshell-ai/OpenVoice")
+            raise FileNotFoundError(f"Checkpoints not found: {ckpt_converter}")
+        
         device = 'cuda' if os.system('nvidia-smi') == 0 else 'cpu'
+        print(f"🔧 Using device: {device}")
         
+        print("   Loading BaseSpeakerTTS...")
         base_speaker_tts = BaseSpeakerTTS(f'{ckpt_base}/config.json', device=device)
         base_speaker_tts.load_ckpt(f'{ckpt_base}/checkpoint.pth')
+        print("   ✅ BaseSpeakerTTS loaded")
         
+        print("   Loading ToneColorConverter...")
         tone_color_converter = ToneColorConverter(
             f'{ckpt_converter}/config.json', device=device
         )
         tone_color_converter.load_ckpt(f'{ckpt_converter}/checkpoint.pth')
-        
-        # Load MeloTTS for base TTS
-        tts_model = TTS(language='EN', device=device)
+        print("   ✅ ToneColorConverter loaded")
         
         openvoice_model = {
             'base_speaker_tts': base_speaker_tts,
             'tone_color_converter': tone_color_converter,
-            'device': device
+            'device': device,
+            'se_extractor': se_extractor
         }
         
-        print("✅ OpenVoice models loaded successfully")
+        print("✅ OpenVoice models loaded successfully!")
         
     except Exception as e:
-        print(f"⚠️ OpenVoice not available, using fallback: {e}")
+        print(f"❌ OpenVoice loading failed: {e}")
+        import traceback
+        traceback.print_exc()
         openvoice_model = None
 
 @app.route('/health', methods=['GET'])
@@ -110,12 +144,16 @@ def synthesize():
             
             base_speaker_tts = openvoice_model['base_speaker_tts']
             tone_color_converter = openvoice_model['tone_color_converter']
+            se_extractor = openvoice_model['se_extractor']
             device = openvoice_model['device']
             
             # Generate base speech - try jon_reference first, then default
-            src_path = 'resources/audio/jon_reference.wav'  # Jon's voice
+            script_dir = os.path.dirname(os.path.abspath(__file__))
+            project_root = os.path.dirname(script_dir)
+            
+            src_path = os.path.join(project_root, 'resources', 'audio', 'jon_reference.wav')  # Jon's voice
             if not os.path.exists(src_path):
-                src_path = 'resources/audio/reference.wav'  # Fallback reference
+                src_path = os.path.join(project_root, 'resources', 'audio', 'reference.wav')  # Fallback reference
             if not os.path.exists(src_path):
                 # Use MeloTTS to generate base
                 speaker_ids = tts_model.hps.data.spk2id
@@ -128,7 +166,7 @@ def synthesize():
                 # Clone voice
                 tgt_path = tempfile.mktemp(suffix='.wav')
                 encode_message = "@MyShell"
-                se, audio_name = se_extractor.get_se(src_path, tone_color_converter, vad_model=None)
+                se, audio_name = se_extractor.get_se(output_path, tone_color_converter, vad_model=None)
                 
                 speaker_src = base_speaker_tts.tts(text, src_path, language=language)
                 speaker_tgt = tone_color_converter.convert(
@@ -151,7 +189,8 @@ def synthesize():
                     as_attachment=False
                 )
             else:
-                # Use reference voice
+                # Use reference voice (Jon's voice)
+                print(f"🎤 Using reference voice: {src_path}")
                 speaker_src = base_speaker_tts.tts(text, src_path, language=language)
                 se, audio_name = se_extractor.get_se(src_path, tone_color_converter, vad_model=None)
                 
