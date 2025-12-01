@@ -213,8 +213,14 @@ def synthesize():
                     as_attachment=False
                 )
         else:
-            # Fallback: return empty response (Swift will use system TTS)
-            return jsonify({'error': 'OpenVoice not available'}), 503
+            # OpenVoice models failed to load
+            error_msg = "OpenVoice models not loaded. Please download checkpoints."
+            print(f"❌ {error_msg}")
+            print("   Run: ./download_checkpoints.sh for instructions")
+            return jsonify({
+                'error': error_msg,
+                'details': 'Checkpoints missing or models failed to load. See server logs for details.'
+            }), 503
             
     except Exception as e:
         print(f"❌ Synthesis error: {e}")
