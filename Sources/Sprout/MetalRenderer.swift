@@ -215,7 +215,7 @@ class MetalRenderer: NSObject, MTKViewDelegate {
             
             // Create asymmetric bounce: FAST up, SLOW down
             // Use separate speeds for upward and downward movement
-            float upSpeed = 3.5 + audioReaction * 1.5; // Much faster upward movement
+            float upSpeed = 7.0 + audioReaction * 3.0; // 2x faster upward movement (was 3.5)
             float downSpeed = 1.2; // Slower, natural downward movement (fixed)
             
             // Calculate phase with different speeds for up vs down
