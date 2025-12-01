@@ -132,7 +132,7 @@ def synthesize():
             
             base_speaker_tts = openvoice_model['base_speaker_tts']
             tone_color_converter = openvoice_model['tone_color_converter']
-            se_extractor = openvoice_model['se_extractor']
+            get_se = openvoice_model['get_se']
             device = openvoice_model['device']
             
             # Generate base speech - try jon_reference first, then default
