@@ -154,7 +154,7 @@ def synthesize():
                     tts_model.tts_to_file(text, speaker_id, tmp_src_path, speed=speed)
                     
                     # Extract embeddings from generated audio
-                    source_se, _ = get_se(tmp_src_path, tone_color_converter, vad_model=None)
+                    source_se, _ = get_se(tmp_src_path, tone_color_converter, vad=False)
                     target_se = source_se  # Use same embedding if no reference
                     
                     # Convert tone (will just pass through since src_se == tgt_se)
@@ -211,7 +211,7 @@ def synthesize():
                 if not os.path.exists(source_se_path):
                     # Fallback: try to extract from generated audio (less ideal)
                     print("⚠️  en_default_se.pth not found, extracting from generated audio")
-                    source_se, _ = get_se(tmp_src_path, tone_color_converter, vad_model=None)
+                    source_se, _ = get_se(tmp_src_path, tone_color_converter, vad=False)
                 else:
                     import torch
                     source_se = torch.load(source_se_path, map_location=device)
