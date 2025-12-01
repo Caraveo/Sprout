@@ -56,3 +56,8 @@ __pycache__/
 *.so
 *.dylib
 *.dll
+
+# Personal audio files
+*.m4a
+*.mp3
+!resources/audio/*.wav
