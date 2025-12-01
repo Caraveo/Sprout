@@ -68,6 +68,26 @@ struct SettingsView: View {
                     Divider()
                         .padding(.horizontal, 24)
                     
+                    // Voice Type Section
+                    SettingsSection(title: "Voice Type / Emotion", icon: "waveform") {
+                        VStack(spacing: 16) {
+                            Picker("Voice Type", selection: $settings.voiceType) {
+                                ForEach(SettingsManager.VoiceType.allCases) { voiceType in
+                                    Text(voiceType.displayName).tag(voiceType)
+                                }
+                            }
+                            .pickerStyle(.segmented)
+                            
+                            Text("Choose how Sprout's voice sounds: \(settings.voiceType.displayName)")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                        }
+                    }
+                    
+                    Divider()
+                        .padding(.horizontal, 24)
+                    
                     // Cloud AI Section
                     SettingsSection(title: "Cloud AI", icon: "cloud.fill") {
                         VStack(spacing: 16) {

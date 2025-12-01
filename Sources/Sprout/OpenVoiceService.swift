@@ -62,7 +62,7 @@ class OpenVoiceService {
         }
     }
     
-    func synthesize(text: String) async -> Data? {
+    func synthesize(text: String, voiceType: String = "default") async -> Data? {
         // Ensure we're using the detected port
         let urlString = "http://localhost:\(detectedPort)/synthesize"
         guard let url = URL(string: urlString) else {
@@ -77,13 +77,13 @@ class OpenVoiceService {
         let body: [String: Any] = [
             "text": text,
             "language": "en",
-            "style": "default"
+            "style": voiceType
         ]
         
         request.httpBody = try? JSONSerialization.data(withJSONObject: body)
         
         do {
-            print("🎤 OpenVoice: Requesting synthesis for: \(text.prefix(50))...")
+            print("🎤 OpenVoice: Requesting synthesis for: \(text.prefix(50))... (voice: \(voiceType))")
             let (data, response) = try await session.data(for: request)
             
             guard let httpResponse = response as? HTTPURLResponse else {
