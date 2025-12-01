@@ -184,7 +184,8 @@ def synthesize():
                 else:
                     # Fallback: use base speaker TTS only (no voice cloning)
                     tmp_src_path = tempfile.mktemp(suffix='.wav')
-                    base_speaker_tts.tts(text, tmp_src_path, speaker='default', language='English', speed=1.1)  # 10% faster
+                    speaker_style = style if style in ['default', 'excited', 'friendly', 'cheerful', 'sad', 'angry', 'terrified', 'shouting', 'whispering'] else 'default'
+                    base_speaker_tts.tts(text, tmp_src_path, speaker=speaker_style, language='English', speed=1.1)  # 10% faster
                     
                     with open(tmp_src_path, 'rb') as f:
                         audio_data = f.read()
