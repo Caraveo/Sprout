@@ -381,7 +381,7 @@ class WellbeingCoach: ObservableObject {
         // Use Ollama to generate encouragement
         if let encouragement = await ollamaService.generateEncouragement(prompt: prompt) {
             let emoji = getEmojiForResponse(encouragement)
-            await globalVoiceAssistant?.speak(encouragement, emoji: emoji, voiceStyle: .friendly)
+            await globalVoiceAssistant?.speak(encouragement, emoji: emoji, voiceStyle: .encouraging)
             print("💚 Delivered AI encouragement: \(encouragement)")
         } else {
             // Fallback encouragement
