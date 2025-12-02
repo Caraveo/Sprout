@@ -60,13 +60,33 @@ struct SettingsView: View {
                                     TextField("llama3.2", text: $settings.ollamaModel)
                                         .textFieldStyle(.roundedBorder)
                                 } else {
-                                    Picker("", selection: $settings.ollamaModel) {
-                                        ForEach(settings.availableOllamaModels, id: \.self) { model in
-                                            Text(model).tag(model)
+                                    VStack(alignment: .trailing, spacing: 4) {
+                                        Picker("", selection: $settings.ollamaModel) {
+                                            ForEach(settings.availableOllamaModels, id: \.self) { model in
+                                                Text(model).tag(model)
+                                            }
+                                        }
+                                        .pickerStyle(.menu)
+                                        .frame(maxWidth: .infinity, alignment: .trailing)
+                                        
+                                        if settings.availableOllamaModels.count > 1 {
+                                            Button(action: {
+                                                Task {
+                                                    await settings.refreshOllamaModels()
+                                                }
+                                            }) {
+                                                HStack(spacing: 4) {
+                                                    Image(systemName: "sparkles")
+                                                        .font(.system(size: 9))
+                                                    Text("Auto-select Best")
+                                                        .font(.caption)
+                                                }
+                                                .foregroundColor(.blue)
+                                            }
+                                            .buttonStyle(PlainButtonStyle())
+                                            .help("Automatically select the best available model")
                                         }
                                     }
-                                    .pickerStyle(.menu)
-                                    .frame(maxWidth: .infinity, alignment: .trailing)
                                 }
                             }
                             
@@ -101,10 +121,39 @@ struct SettingsView: View {
                             }
                             
                             if !settings.availableOllamaModels.isEmpty {
-                                Text("\(settings.availableOllamaModels.count) model(s) available")
-                                    .font(.caption)
-                                    .foregroundColor(.secondary)
-                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                VStack(alignment: .leading, spacing: 6) {
+                                    Text("\(settings.availableOllamaModels.count) model(s) available")
+                                        .font(.caption)
+                                        .foregroundColor(.secondary)
+                                    
+                                    // Show model list
+                                    ScrollView(.horizontal, showsIndicators: false) {
+                                        HStack(spacing: 8) {
+                                            ForEach(settings.availableOllamaModels, id: \.self) { model in
+                                                Text(model)
+                                                    .font(.caption2)
+                                                    .padding(.horizontal, 8)
+                                                    .padding(.vertical, 4)
+                                                    .background(
+                                                        settings.ollamaModel == model ?
+                                                        Color.accentColor.opacity(0.2) :
+                                                        Color.secondary.opacity(0.1)
+                                                    )
+                                                    .cornerRadius(6)
+                                                    .overlay(
+                                                        RoundedRectangle(cornerRadius: 6)
+                                                            .stroke(
+                                                                settings.ollamaModel == model ?
+                                                                Color.accentColor.opacity(0.5) :
+                                                                Color.clear,
+                                                                lineWidth: 1
+                                                            )
+                                                    )
+                                            }
+                                        }
+                                    }
+                                }
+                                .frame(maxWidth: .infinity, alignment: .leading)
                             }
                         }
                     }

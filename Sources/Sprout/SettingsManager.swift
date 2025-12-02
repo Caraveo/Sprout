@@ -178,11 +178,78 @@ class SettingsManager: ObservableObject {
         let models = await service.listModels()
         await MainActor.run {
             self.availableOllamaModels = models
-            // If current model is not in list, keep it (might be downloading)
-            if !models.isEmpty && !models.contains(ollamaModel) {
-                print("⚠️ Current model '\(ollamaModel)' not in available models list")
+            
+            if !models.isEmpty {
+                // Auto-select the best model if current model is not available or if no model is set
+                if !models.contains(ollamaModel) || ollamaModel.isEmpty {
+                    let bestModel = selectBestModel(from: models)
+                    print("🎯 Auto-selected best model: \(bestModel)")
+                    self.ollamaModel = bestModel
+                }
             }
         }
+    }
+    
+    private func selectBestModel(from models: [String]) -> String {
+        // Model priority: larger/newer models are generally better
+        // Priority order: llama3.2 > llama3.1 > llama3 > llama2 > mistral > others
+        
+        let modelPriority: [String: Int] = [
+            "llama3.2": 100,
+            "llama3.1": 90,
+            "llama3": 80,
+            "llama2": 70,
+            "mistral": 60,
+            "mixtral": 65,
+            "phi": 50,
+            "gemma": 55,
+            "qwen": 45
+        ]
+        
+        // Find the model with highest priority
+        var bestModel: String? = nil
+        var bestPriority = -1
+        
+        for model in models {
+            let lowerModel = model.lowercased()
+            var priority = 0
+            
+            // Check for priority matches
+            for (key, value) in modelPriority {
+                if lowerModel.contains(key) {
+                    priority = max(priority, value)
+                }
+            }
+            
+            // Boost priority for larger models (indicated by numbers or size indicators)
+            if lowerModel.contains("70b") || lowerModel.contains("65b") {
+                priority += 20
+            } else if lowerModel.contains("13b") || lowerModel.contains("8b") {
+                priority += 10
+            } else if lowerModel.contains("7b") || lowerModel.contains("3b") {
+                priority += 5
+            }
+            
+            // Prefer newer versions (higher numbers)
+            if let versionMatch = lowerModel.range(of: #"\d+\.\d+"#, options: .regularExpression) {
+                let version = String(lowerModel[versionMatch])
+                if let versionNum = Double(version) {
+                    priority += Int(versionNum * 2)
+                }
+            }
+            
+            if priority > bestPriority {
+                bestPriority = priority
+                bestModel = model
+            }
+        }
+        
+        // Fallback: if no priority match, prefer longer names (usually more specific)
+        if bestModel == nil {
+            bestModel = models.max(by: { $0.count < $1.count })
+        }
+        
+        return bestModel ?? models.first ?? "llama3.2"
     }
 }
 
