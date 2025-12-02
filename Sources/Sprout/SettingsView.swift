@@ -7,7 +7,6 @@ struct SettingsView: View {
     @State private var testConnectionStatus: String? = nil
     @State private var testingVoiceStyle: SettingsManager.VoiceType? = nil
     @State private var voiceTestStatus: String? = nil
-    @State private var showingTraining = false
     
     var body: some View {
         VStack(spacing: 0) {
@@ -37,59 +36,6 @@ struct SettingsView: View {
             
             ScrollView {
                 VStack(spacing: 24) {
-                    // Training Section
-                    SettingsSection(title: "AI Training", icon: "brain.head.profile") {
-                        VStack(spacing: 16) {
-                            if settings.trainingCompleted {
-                                VStack(alignment: .leading, spacing: 12) {
-                                    Text("Training Status: ✅ Complete")
-                                        .font(.system(size: 14, weight: .semibold))
-                                        .foregroundColor(.green)
-                                    
-                                    if !settings.userName.isEmpty {
-                                        Text("Name: \(settings.userName)")
-                                            .font(.system(size: 13))
-                                            .foregroundColor(.secondary)
-                                    }
-                                    if !settings.userGender.isEmpty {
-                                        Text("Gender: \(settings.userGender.capitalized)")
-                                            .font(.system(size: 13))
-                                            .foregroundColor(.secondary)
-                                    }
-                                    if !settings.userAge.isEmpty {
-                                        Text("Age: \(settings.userAge.capitalized)")
-                                            .font(.system(size: 13))
-                                            .foregroundColor(.secondary)
-                                    }
-                                }
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                            } else {
-                                Text("Complete training to personalize Sprout for you")
-                                    .font(.system(size: 13))
-                                    .foregroundColor(.secondary)
-                                    .frame(maxWidth: .infinity, alignment: .leading)
-                            }
-                            
-                            Button(action: {
-                                showingTraining = true
-                            }) {
-                                HStack {
-                                    Image(systemName: settings.trainingCompleted ? "arrow.triangle.2.circlepath" : "brain.head.profile")
-                                    Text(settings.trainingCompleted ? "Retrain" : "Start Training")
-                                }
-                                .frame(maxWidth: .infinity)
-                                .padding(.vertical, 12)
-                                .background(Color.accentColor.opacity(0.1))
-                                .foregroundColor(.accentColor)
-                                .cornerRadius(8)
-                            }
-                            .buttonStyle(PlainButtonStyle())
-                        }
-                    }
-                    
-                    Divider()
-                        .padding(.horizontal, 24)
-                    
                     // Local AI (Ollama) Section
                     SettingsSection(title: "Local AI (Ollama)", icon: "cpu") {
                         VStack(spacing: 16) {
@@ -358,10 +304,6 @@ struct SettingsView: View {
             Task {
                 await settings.refreshOllamaModels()
             }
-        }
-        .sheet(isPresented: $showingTraining) {
-            TrainingView()
-                .environmentObject(settings)
         }
     }
     
