@@ -121,7 +121,7 @@ struct EmojiView: View {
     func showEmoji(from emojiList: [String]) {
         changeTimer?.invalidate()
         
-        currentEmoji = emojiList.randomElement() ?? "🌱"
+        currentEmoji = emojiList.randomElement() ?? "😊"
         
         rotation = 0.0
         scale = 0.0
