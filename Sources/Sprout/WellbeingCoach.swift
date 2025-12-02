@@ -301,7 +301,7 @@ class WellbeingCoach: ObservableObject {
         await globalVoiceAssistant?.speak("If your mind wanders, that's okay. Gently bring your attention back to your breath.", emoji: "🌿")
         
         try? await Task.sleep(nanoseconds: 10_000_000_000)
-        await globalVoiceAssistant?.speak("Take a moment to notice how you feel. You've done something wonderful for your mind wellbeing.", emoji: "✨")
+        await globalVoiceAssistant?.speak("Take a moment to notice how you feel. You've done something wonderful for the wellbeing of your mind.", emoji: "✨")
         
         sessionActive = false
         updateProgress()
@@ -355,7 +355,7 @@ class WellbeingCoach: ObservableObject {
     private func giveEncouragement() async {
         // Generate a positive, encouraging message using Ollama
         let encouragementPrompts = [
-            "Give a brief, warm encouragement about taking care of mind wellbeing. Be positive and supportive.",
+            "Give a brief, warm encouragement about taking care of the wellbeing of your mind. Be positive and supportive.",
             "Share a short, uplifting message about self-care and emotional wellness.",
             "Offer a kind reminder about being gentle with oneself and practicing mindfulness.",
             "Give a brief, encouraging note about the importance of taking breaks and checking in with oneself."
