@@ -77,15 +77,28 @@ struct MenuBarView: View {
         Group {
             if currentView == .settings {
                 MenuBarSettingsView(currentView: $currentView)
+                    .frame(width: 600, height: 750)
+                    .onAppear {
+                        globalMenuBarManager?.popover?.contentSize = NSSize(width: 600, height: 750)
+                    }
             } else {
                 MenuBarMainView(
                     voiceAssistant: voiceAssistant,
                     wellbeingCoach: wellbeingCoach,
                     currentView: $currentView
                 )
+                .frame(width: 340, height: 520)
+                .onAppear {
+                    globalMenuBarManager?.popover?.contentSize = NSSize(width: 340, height: 520)
+                }
             }
         }
-        .frame(width: currentView == .settings ? 600 : 340, height: currentView == .settings ? 750 : 520)
+        .onChange(of: currentView) { newView in
+            // Resize popover when view changes
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
+                globalMenuBarManager?.popover?.contentSize = newView == .settings ? NSSize(width: 600, height: 750) : NSSize(width: 340, height: 520)
+            }
+        }
     }
 }
 
