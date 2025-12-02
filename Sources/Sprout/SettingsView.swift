@@ -71,9 +71,9 @@ struct SettingsView: View {
                                         
                                         if settings.availableOllamaModels.count > 1 {
                                             Button(action: {
-                                                Task {
-                                                    await settings.refreshOllamaModels()
-                                                }
+                                                let bestModel = settings.selectBestModel()
+                                                settings.ollamaModel = bestModel
+                                                print("🎯 Manually selected best model: \(bestModel)")
                                             }) {
                                                 HStack(spacing: 4) {
                                                     Image(systemName: "sparkles")

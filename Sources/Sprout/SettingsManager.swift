@@ -182,7 +182,7 @@ class SettingsManager: ObservableObject {
             if !models.isEmpty {
                 // Auto-select the best model if current model is not available or if no model is set
                 if !models.contains(ollamaModel) || ollamaModel.isEmpty {
-                    let bestModel = selectBestModel(from: models)
+                    let bestModel = selectBestModelInternal(from: models)
                     print("🎯 Auto-selected best model: \(bestModel)")
                     self.ollamaModel = bestModel
                 }
@@ -190,7 +190,14 @@ class SettingsManager: ObservableObject {
         }
     }
     
-    private func selectBestModel(from models: [String]) -> String {
+    func selectBestModel(from models: [String]? = nil) -> String {
+        let modelList = models ?? availableOllamaModels
+        guard !modelList.isEmpty else { return ollamaModel }
+        
+        return selectBestModelInternal(from: modelList)
+    }
+    
+    private func selectBestModelInternal(from models: [String]) -> String {
         // Model priority: larger/newer models are generally better
         // Priority order: llama3.2 > llama3.1 > llama3 > llama2 > mistral > others
         
