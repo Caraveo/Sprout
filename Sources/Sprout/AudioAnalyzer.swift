@@ -139,58 +139,60 @@ class AudioAnalyzer: ObservableObject {
         let normalizedLevel = min(rms * 25.0, 1.0) // Reduced from 50.0 for loud environments
         let normalizedFrequency = min(frequencyRatio * 1.5, 1.0) // Normalize frequency ratio
         
+        // Process audio update on main thread
         DispatchQueue.main.async { [weak self] in
-            guard let self = self else { return }
-            
-            // Adaptive noise baseline - learn the environment's noise floor
-            self.noiseSamples.append(normalizedLevel)
-            if self.noiseSamples.count > self.maxNoiseSamples {
-                self.noiseSamples.removeFirst()
-            }
-            
-            // Calculate baseline as median of recent samples (more robust than mean)
-            let sortedSamples = self.noiseSamples.sorted()
-            let medianIndex = sortedSamples.count / 2
-            self.baselineNoiseLevel = sortedSamples[medianIndex]
-            
-            // Adaptive threshold: baseline + 20% for loud environments
-            self.adaptiveThreshold = max(0.2, min(0.6, self.baselineNoiseLevel + 0.2))
-            
-            // Noise gate: subtract baseline noise to get actual signal
-            let signalLevel = max(0.0, normalizedLevel - self.baselineNoiseLevel * 0.7)
-            let gatedLevel = signalLevel / max(0.01, 1.0 - self.baselineNoiseLevel * 0.7) // Normalize after gating
-            
-            // Smooth transition - adjusted for loud environments
-            if let currentLevel = self.audioLevel {
-                // Slower smoothing in loud environments to reduce jitter
-                let smoothingFactor = self.baselineNoiseLevel > 0.4 ? 0.3 : 0.2
-                self.audioLevel = currentLevel * (1.0 - smoothingFactor) + gatedLevel * smoothingFactor
-            } else {
-                self.audioLevel = gatedLevel
-            }
-            
-            // Much faster frequency response for rapid color transitions
-            if let currentFreq = self.audioFrequency {
-                self.audioFrequency = currentFreq * 0.15 + normalizedFrequency * 0.85
-            } else {
-                self.audioFrequency = normalizedFrequency
-            }
-            
-            // Audio intensity (combination of level and frequency) - adjusted for loud environments
-            // Use gated level instead of raw normalized level
-            self.audioIntensity = (gatedLevel + normalizedFrequency) * 0.5
-            
-            // Debug: print occasionally with noise info
-            self.debugCounter += 1
-            if self.debugCounter % 100 == 0 {
-                print("📊 Audio - Level: \(String(format: "%.3f", gatedLevel)), Baseline: \(String(format: "%.3f", self.baselineNoiseLevel)), Threshold: \(String(format: "%.3f", self.adaptiveThreshold)), Intensity: \(String(format: "%.3f", self.audioIntensity))")
-            }
-            
-            // Debug: print occasionally
-            self?.debugCounter += 1
-            if let counter = self?.debugCounter, counter % 100 == 0 {
-                print("📊 Real Audio - Level: \(String(format: "%.3f", normalizedLevel)), Freq: \(String(format: "%.3f", normalizedFrequency)), Intensity: \(String(format: "%.3f", self?.audioIntensity ?? 0))")
-            }
+            self?.updateAudioMetrics(normalizedLevel: normalizedLevel, normalizedFrequency: normalizedFrequency)
+        }
+    }
+    
+    private func updateAudioMetrics(normalizedLevel: Float, normalizedFrequency: Float) {
+        // Adaptive noise baseline - learn the environment's noise floor
+        noiseSamples.append(normalizedLevel)
+        if noiseSamples.count > maxNoiseSamples {
+            noiseSamples.removeFirst()
+        }
+        
+        // Calculate baseline as median of recent samples (more robust than mean)
+        let sortedSamples = noiseSamples.sorted()
+        let medianIndex = sortedSamples.count / 2
+        baselineNoiseLevel = sortedSamples[medianIndex]
+        
+        // Adaptive threshold: baseline + 20% for loud environments
+        adaptiveThreshold = max(0.2, min(0.6, baselineNoiseLevel + 0.2))
+        
+        // Noise gate: subtract baseline noise to get actual signal
+        let baselineMult: Float = 0.7
+        let signalLevel = max(0.0, normalizedLevel - baselineNoiseLevel * baselineMult)
+        let denom = max(0.01, 1.0 - baselineNoiseLevel * baselineMult)
+        let gatedLevel = signalLevel / denom
+        
+        // Smooth transition - adjusted for loud environments
+        if audioLevel > 0 {
+            // Slower smoothing in loud environments to reduce jitter
+            let smoothingFactor: Float = baselineNoiseLevel > 0.4 ? 0.3 : 0.2
+            audioLevel = audioLevel * (1.0 - smoothingFactor) + gatedLevel * smoothingFactor
+        } else {
+            audioLevel = gatedLevel
+        }
+        
+        // Much faster frequency response for rapid color transitions
+        if audioFrequency > 0 {
+            audioFrequency = audioFrequency * 0.15 + normalizedFrequency * 0.85
+        } else {
+            audioFrequency = normalizedFrequency
+        }
+        
+        // Audio intensity (combination of level and frequency) - adjusted for loud environments
+        audioIntensity = (gatedLevel + normalizedFrequency) * 0.5
+        
+        // Debug: print occasionally with noise info
+        debugCounter += 1
+        if debugCounter % 100 == 0 {
+            let levelStr = String(format: "%.3f", gatedLevel)
+            let baselineStr = String(format: "%.3f", baselineNoiseLevel)
+            let thresholdStr = String(format: "%.3f", adaptiveThreshold)
+            let intensityStr = String(format: "%.3f", audioIntensity)
+            print("📊 Audio - Level: \(levelStr), Baseline: \(baselineStr), Threshold: \(thresholdStr), Intensity: \(intensityStr)")
         }
     }
     
@@ -205,4 +207,3 @@ class AudioAnalyzer: ObservableObject {
         stop()
     }
 }
-
