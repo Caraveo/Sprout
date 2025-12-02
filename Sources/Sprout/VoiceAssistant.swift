@@ -112,13 +112,20 @@ class VoiceAssistant: ObservableObject {
             return
         }
         
-        recognitionRequest = SFSpeechAudioBufferRecognitionRequest()
-        guard let recognitionRequest = recognitionRequest else {
-            print("❌ Failed to create recognition request")
-            return
-        }
-        
-        recognitionRequest.shouldReportPartialResults = true
+            recognitionRequest = SFSpeechAudioBufferRecognitionRequest()
+            guard let recognitionRequest = recognitionRequest else {
+                print("❌ Failed to create recognition request")
+                return
+            }
+            
+            recognitionRequest.shouldReportPartialResults = true
+            
+            // Optimize for loud environments
+            // Use dictation mode for better noise handling
+            recognitionRequest.taskHint = .dictation
+            
+            // Add context hints to improve recognition in noisy environments
+            recognitionRequest.contextualStrings = ["Seedling", "Sprout", "breathing", "meditation", "wellbeing", "mind", "feel", "help", "support"]
         
         let inputNode = audioEngine.inputNode
         let recordingFormat = inputNode.outputFormat(forBus: 0)

@@ -74,26 +74,33 @@ struct EmojiView: View {
     func handleAudioIntensity(_ intensity: Float) {
         lastAudioIntensity = intensity
         
-        // If level > 0.7, show "too loud" emojis
-        if lastAudioLevel > 0.7 {
+        // Adjusted thresholds for loud environments
+        // Higher thresholds since baseline noise is already high
+        let loudThreshold = 0.85  // Increased from 0.7 for loud environments
+        let energeticThreshold = 0.4  // Increased from 0.3
+        let wellbeingThreshold = 0.2  // Increased from 0.15
+        let calmingThreshold = 0.08  // Increased from 0.05
+        
+        // If level > loudThreshold, show "too loud" emojis
+        if lastAudioLevel > loudThreshold {
             if currentEmoji.isEmpty || !tooLoudEmojis.contains(currentEmoji) {
                 showEmoji(from: tooLoudEmojis)
             }
         }
-        // If intensity > 0.3, show energetic emojis
-        else if intensity > 0.3 {
+        // If intensity > energeticThreshold, show energetic emojis
+        else if intensity > energeticThreshold {
             if currentEmoji.isEmpty || !energeticEmojis.contains(currentEmoji) {
                 showEmoji(from: energeticEmojis)
             }
         }
-        // If intensity > 0.15, show general wellbeing emojis
-        else if intensity > 0.15 {
+        // If intensity > wellbeingThreshold, show general wellbeing emojis
+        else if intensity > wellbeingThreshold {
             if currentEmoji.isEmpty || !wellbeingEmojis.contains(currentEmoji) {
                 showEmoji(from: wellbeingEmojis)
             }
         }
         // Low intensity - show calming emojis
-        else if intensity > 0.05 {
+        else if intensity > calmingThreshold {
             if currentEmoji.isEmpty || !calmingEmojis.contains(currentEmoji) {
                 showEmoji(from: calmingEmojis)
             }
@@ -102,11 +109,12 @@ struct EmojiView: View {
     
     func showRandomEmoji() {
         let emojiList: [String]
-        if lastAudioLevel > 0.7 {
+        // Adjusted thresholds for loud environments
+        if lastAudioLevel > 0.85 {
             emojiList = tooLoudEmojis
-        } else if lastAudioIntensity > 0.3 {
+        } else if lastAudioIntensity > 0.4 {
             emojiList = energeticEmojis
-        } else if lastAudioIntensity > 0.15 {
+        } else if lastAudioIntensity > 0.2 {
             emojiList = wellbeingEmojis
         } else {
             emojiList = calmingEmojis
