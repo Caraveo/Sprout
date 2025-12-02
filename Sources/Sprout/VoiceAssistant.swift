@@ -435,15 +435,8 @@ class VoiceAssistant: ObservableObject {
         
         await MainActor.run {
             self.conversationHistory.append(assistantMessage)
-            self.isSpeaking = false
-            
-            // Automatically restart listening after AI finishes speaking
-            // Wait a brief moment for the audio to finish playing
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                if !self.isListening && !self.isSpeaking {
-                    self.startListening()
-                }
-            }
+            // isSpeaking will be set to false when audio finishes (in delegates)
+            // Listening will restart automatically in the delegates
         }
     }
     
@@ -484,9 +477,9 @@ class VoiceAssistant: ObservableObject {
                 }
             }
             
-            delegate = SpeechDelegate {
+            delegate = SpeechDelegate(voiceAssistant: self, completion: {
                 resumeOnce()
-            }
+            })
             synthesizer.delegate = delegate
             
             // Start speaking
@@ -503,6 +496,12 @@ class VoiceAssistant: ObservableObject {
         synthesizer.delegate = nil
         delegate = nil
         currentSynthesizer = nil
+        
+        // Set isSpeaking to false after TTS completes
+        // (Listening restart is handled in SpeechDelegate.didFinish)
+        await MainActor.run {
+            self.isSpeaking = false
+        }
     }
     
     func stopSpeaking() {
@@ -589,14 +588,26 @@ class VoiceAssistant: ObservableObject {
 }
 
 class SpeechDelegate: NSObject, AVSpeechSynthesizerDelegate {
+    weak var voiceAssistant: VoiceAssistant?
     let completion: () -> Void
     
-    init(completion: @escaping () -> Void) {
+    init(voiceAssistant: VoiceAssistant? = nil, completion: @escaping () -> Void) {
+        self.voiceAssistant = voiceAssistant
         self.completion = completion
     }
     
     func speechSynthesizer(_ synthesizer: AVSpeechSynthesizer, didFinish utterance: AVSpeechUtterance) {
         completion()
+        
+        // Restart listening after speech finishes
+        if let assistant = voiceAssistant {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                if !assistant.isListening && !assistant.isSpeaking {
+                    print("🔄 Restarting listening after system TTS finished")
+                    assistant.startListening()
+                }
+            }
+        }
     }
 }
 
@@ -616,6 +627,19 @@ class AudioDelegate: NSObject, AVAudioPlayerDelegate {
         }
         voiceAssistant?.currentAudioPlayer = nil
         voiceAssistant?.audioPlayerDelegate = nil
+        
+        // Set isSpeaking to false
+        voiceAssistant?.isSpeaking = false
+        
+        // Restart listening after audio finishes
+        if let assistant = voiceAssistant {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                if !assistant.isListening && !assistant.isSpeaking {
+                    print("🔄 Restarting listening after OpenVoice audio finished")
+                    assistant.startListening()
+                }
+            }
+        }
     }
     
     func audioPlayerDecodeErrorDidOccur(_ player: AVAudioPlayer, error: Error?) {
@@ -627,6 +651,16 @@ class AudioDelegate: NSObject, AVAudioPlayerDelegate {
         }
         voiceAssistant?.currentAudioPlayer = nil
         voiceAssistant?.audioPlayerDelegate = nil
+        
+        // Restart listening even on error
+        if let assistant = voiceAssistant {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                if !assistant.isListening && !assistant.isSpeaking {
+                    print("🔄 Restarting listening after audio error")
+                    assistant.startListening()
+                }
+            }
+        }
     }
 }
 
