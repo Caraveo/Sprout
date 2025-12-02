@@ -60,6 +60,23 @@ class SettingsManager: ObservableObject {
     
     @Published var availableOllamaModels: [String] = []
     
+    // Training data
+    @Published var userName: String {
+        didSet { saveSettings() }
+    }
+    @Published var userGender: String {
+        didSet { saveSettings() }
+    }
+    @Published var userAge: String {
+        didSet { saveSettings() }
+    }
+    @Published var mentalHealthInfo: String {
+        didSet { saveSettings() }
+    }
+    @Published var trainingCompleted: Bool {
+        didSet { saveSettings() }
+    }
+    
     enum VoiceType: String, CaseIterable, Identifiable {
         case neutral = "neutral"
         case enthusiastic = "enthusiastic"
@@ -159,6 +176,13 @@ class SettingsManager: ObservableObject {
         
         // Load remote access setting
         ollamaAllowRemote = UserDefaults.standard.bool(forKey: "ollamaAllowRemote")
+        
+        // Load training data
+        userName = UserDefaults.standard.string(forKey: "userName") ?? ""
+        userGender = UserDefaults.standard.string(forKey: "userGender") ?? ""
+        userAge = UserDefaults.standard.string(forKey: "userAge") ?? ""
+        mentalHealthInfo = UserDefaults.standard.string(forKey: "mentalHealthInfo") ?? ""
+        trainingCompleted = UserDefaults.standard.bool(forKey: "trainingCompleted")
     }
     
     func resetToDefaults() {
@@ -171,6 +195,35 @@ class SettingsManager: ObservableObject {
         cloudBaseURL = cloudProvider.defaultBaseURL
         voiceType = .neutral
         ollamaAllowRemote = false
+        // Don't reset training data on defaults reset
+    }
+    
+    private func saveSettings() {
+        UserDefaults.standard.set(ollamaBaseURL, forKey: "ollamaBaseURL")
+        UserDefaults.standard.set(ollamaModel, forKey: "ollamaModel")
+        UserDefaults.standard.set(useCloudAI, forKey: "useCloudAI")
+        UserDefaults.standard.set(cloudProvider.rawValue, forKey: "cloudProvider")
+        UserDefaults.standard.set(cloudBaseURL, forKey: "cloudBaseURL")
+        UserDefaults.standard.set(cloudModel, forKey: "cloudModel")
+        UserDefaults.standard.set(cloudAPIKey, forKey: "cloudAPIKey")
+        UserDefaults.standard.set(voiceType.rawValue, forKey: "voiceType")
+        UserDefaults.standard.set(ollamaAllowRemote, forKey: "ollamaAllowRemote")
+        
+        // Save training data
+        UserDefaults.standard.set(userName, forKey: "userName")
+        UserDefaults.standard.set(userGender, forKey: "userGender")
+        UserDefaults.standard.set(userAge, forKey: "userAge")
+        UserDefaults.standard.set(mentalHealthInfo, forKey: "mentalHealthInfo")
+        UserDefaults.standard.set(trainingCompleted, forKey: "trainingCompleted")
+    }
+    
+    func saveTrainingData(name: String, gender: String, age: String, mentalHealth: String) {
+        userName = name
+        userGender = gender
+        userAge = age
+        mentalHealthInfo = mentalHealth
+        trainingCompleted = true
+        saveSettings()
     }
     
     func refreshOllamaModels() async {

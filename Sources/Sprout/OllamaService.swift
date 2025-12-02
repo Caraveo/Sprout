@@ -38,12 +38,45 @@ class OllamaService {
         let analysis: String?
     }
     
+    private func getTrainingContext() -> String {
+        let settings = SettingsManager.shared
+        
+        guard settings.trainingCompleted else {
+            return ""
+        }
+        
+        var context = "PERSONALIZATION INFO:\n"
+        
+        if !settings.userName.isEmpty {
+            context += "- Seedling!'s name is \(settings.userName). Use their name naturally in conversation.\n"
+        }
+        
+        if !settings.userGender.isEmpty {
+            context += "- Seedling! is a \(settings.userGender). Adjust your language appropriately.\n"
+        }
+        
+        if !settings.userAge.isEmpty {
+            context += "- Seedling! is \(settings.userAge). Adjust your communication style to be age-appropriate.\n"
+        }
+        
+        if !settings.mentalHealthInfo.isEmpty {
+            context += "- IMPORTANT: Seedling! has shared the following mental health information: \(settings.mentalHealthInfo)\n"
+            context += "  Be extra sensitive, supportive, and understanding. Tailor your responses to be helpful for their specific needs.\n"
+            context += "  Never be dismissive or minimize their experiences. Be empathetic and validating.\n"
+        }
+        
+        return context
+    }
+    
     func generateResponse(for userMessage: String, context: String = "") async -> ParsedResponse? {
         guard let url = URL(string: "\(baseURL)/api/generate") else { return nil }
         
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        
+        // Get training data from settings
+        let trainingData = getTrainingContext()
         
         // Create a positive, helpful, and concise system prompt
         let systemPrompt = """
@@ -56,6 +89,8 @@ class OllamaService {
         - Never be clinical or medical - be a friendly companion
         - Remember previous conversation context and reference it naturally when relevant
         - Always refer to the user as "Seedling!" - they are your seedling that you're helping to grow!
+        
+        \(trainingData)
         
         SPECIAL MODE BEHAVIOR:
         - If Seedling! is in GAMING mode: Be EXTREMELY enthusiastic about gaming! Use phrases like "WoW! I love gaming! Let's do this!" Show genuine excitement and support for their gaming activity.
