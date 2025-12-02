@@ -110,23 +110,54 @@ class OllamaService {
         request.httpBody = try? JSONSerialization.data(withJSONObject: body)
         
         do {
+            print("🤖 Calling Ollama API at \(baseURL) with model \(model)...")
+            print("📝 User message: \(userMessage.prefix(100))...")
+            print("📋 Context length: \(context.count) characters")
+            
             let (data, response) = try await session.data(for: request)
             
-            guard let httpResponse = response as? HTTPURLResponse,
-                  httpResponse.statusCode == 200 else {
-                print("❌ Ollama service error: \(response)")
+            guard let httpResponse = response as? HTTPURLResponse else {
+                print("❌ Ollama: Invalid response type")
                 return nil
             }
             
-            if let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-               let responseText = json["response"] as? String {
-                // Parse the response format: "answer: ...\n\ntone: ...\n\nanalysis: ..."
-                return parseResponse(responseText)
+            if httpResponse.statusCode != 200 {
+                print("❌ Ollama service error: HTTP \(httpResponse.statusCode)")
+                if let errorData = String(data: data, encoding: .utf8) {
+                    print("   Error details: \(errorData.prefix(200))")
+                }
+                return nil
             }
             
-            return nil
+            guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+                print("❌ Ollama: Failed to parse JSON response")
+                return nil
+            }
+            
+            guard let responseText = json["response"] as? String else {
+                print("❌ Ollama: No 'response' field in JSON")
+                print("   JSON keys: \(json.keys.joined(separator: ", "))")
+                return nil
+            }
+            
+            print("✅ Ollama response received (\(responseText.count) characters)")
+            print("📄 Raw response preview: \(responseText.prefix(200))...")
+            
+            // Parse the response format: "answer: ...\n\ntone: ...\n\nanalysis: ..."
+            if let parsed = parseResponse(responseText) {
+                print("✅ Successfully parsed response:")
+                print("   Answer: \(parsed.answer.prefix(100))...")
+                print("   Tone: \(parsed.tone ?? "none")")
+                print("   Analysis: \(parsed.analysis?.prefix(100) ?? "none")...")
+                return parsed
+            } else {
+                print("❌ Failed to parse response format")
+                print("   Response text: \(responseText)")
+                return nil
+            }
         } catch {
-            print("❌ Ollama request failed: \(error)")
+            print("❌ Ollama request failed: \(error.localizedDescription)")
+            print("   Error details: \(error)")
             return nil
         }
     }

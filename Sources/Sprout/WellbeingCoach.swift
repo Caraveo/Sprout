@@ -147,9 +147,22 @@ class WellbeingCoach: ObservableObject {
         
         var voiceStyle: SettingsManager.VoiceType? = nil
         
+        print("🌱 Calling Ollama for response...")
+        print("   User message: \(text.prefix(50))...")
+        print("   Context: \(fullContext.prefix(100))...")
+        
         if let ollamaResponse = await ollamaService.generateResponse(for: text, context: fullContext) {
-            response = ollamaResponse.answer
-            analysis = ollamaResponse.analysis
+            print("✅ Ollama response received successfully!")
+            response = ollamaResponse.answer.trimmingCharacters(in: .whitespacesAndNewlines)
+            analysis = ollamaResponse.analysis?.trimmingCharacters(in: .whitespacesAndNewlines)
+            
+            // Ensure we have a valid response
+            if response.isEmpty {
+                print("⚠️ Ollama returned empty answer, using fallback")
+                response = generateResponse(for: text)
+            } else {
+                print("✅ Using Ollama response: \(response.prefix(100))...")
+            }
             
             // Map tone to VoiceType
             if let tone = ollamaResponse.tone {
@@ -158,7 +171,9 @@ class WellbeingCoach: ObservableObject {
             }
         } else {
             // Fallback to simple responses
+            print("⚠️ Ollama failed or unavailable, using fallback response")
             response = generateResponse(for: text)
+            print("📝 Fallback response: \(response)")
         }
         
         let emoji = getEmojiForResponse(response)
@@ -366,8 +381,8 @@ class WellbeingCoach: ObservableObject {
         // Use Ollama to generate encouragement
         if let encouragement = await ollamaService.generateEncouragement(prompt: prompt) {
             let emoji = getEmojiForResponse(encouragement)
-            await globalVoiceAssistant?.speak(encouragement, emoji: emoji)
-            print("💚 Delivered encouragement: \(encouragement)")
+            await globalVoiceAssistant?.speak(encouragement, emoji: emoji, voiceStyle: .friendly)
+            print("💚 Delivered AI encouragement: \(encouragement)")
         } else {
             // Fallback encouragement
             let fallbackMessages = [
