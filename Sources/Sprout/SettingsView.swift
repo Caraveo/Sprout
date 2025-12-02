@@ -204,14 +204,18 @@ struct SettingsView: View {
                                             VStack(spacing: 4) {
                                                 Text(voiceType.displayName)
                                                     .font(.system(size: 11, weight: .medium))
-                                                    .foregroundColor(testingVoiceStyle == voiceType ? Color(NSColor.labelColor).opacity(0.9) : .primary)
+                                                    .foregroundColor(
+                                                        testingVoiceStyle == voiceType ?
+                                                        Color(NSColor.labelColor) :
+                                                        .primary
+                                                    )
                                             }
                                             .frame(maxWidth: .infinity)
                                             .padding(.vertical, 8)
                                             .background(
                                                 testingVoiceStyle == voiceType ?
                                                 Color.accentColor :
-                                                Color.secondary.opacity(0.1)
+                                                Color(NSColor.controlBackgroundColor)
                                             )
                                             .cornerRadius(6)
                                         }
