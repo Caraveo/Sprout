@@ -131,7 +131,7 @@ class WellbeingCoach: ObservableObject {
         
         // Try Ollama first, fallback to simple responses
         var response: String
-        let analysis: String? = nil // Will be set via notification
+        var analysis: String? = nil // Will be set from Ollama response
         let moodContext = "Current mood: \(currentMood.rawValue). \(currentMood.emoji)"
         
         // Get mode context
@@ -145,9 +145,17 @@ class WellbeingCoach: ObservableObject {
             fullContext = "\(moodContext)\n\(modeContext)"
         }
         
+        var voiceStyle: SettingsManager.VoiceType? = nil
+        
         if let ollamaResponse = await ollamaService.generateResponse(for: text, context: fullContext) {
-            response = ollamaResponse
-            // Analysis will be set via notification from OllamaService
+            response = ollamaResponse.answer
+            analysis = ollamaResponse.analysis
+            
+            // Map tone to VoiceType
+            if let tone = ollamaResponse.tone {
+                voiceStyle = mapToneToVoiceType(tone)
+                print("🎭 AI selected tone: \(tone) -> voice style: \(voiceStyle?.displayName ?? "default")")
+            }
         } else {
             // Fallback to simple responses
             response = generateResponse(for: text)
@@ -158,13 +166,40 @@ class WellbeingCoach: ObservableObject {
         // Wait a moment for analysis to be parsed
         try? await Task.sleep(nanoseconds: 500_000_000) // 0.5 seconds
         
-        await globalVoiceAssistant?.speak(response, emoji: emoji, analysis: analysis)
+        await globalVoiceAssistant?.speak(response, emoji: emoji, analysis: analysis, voiceStyle: voiceStyle)
         
         // Show emoji
         NotificationCenter.default.post(
             name: NSNotification.Name("WellbeingEmoji"),
             object: emoji
         )
+    }
+    
+    private func mapToneToVoiceType(_ tone: String) -> SettingsManager.VoiceType? {
+        let normalizedTone = tone.lowercased().trimmingCharacters(in: .whitespacesAndNewlines)
+        
+        switch normalizedTone {
+        case "default", "neutral":
+            return .neutral
+        case "excited", "enthusiastic":
+            return .enthusiastic
+        case "friendly", "encouraging":
+            return .encouraging
+        case "cheerful", "happy":
+            return .happy
+        case "sad":
+            return .sad
+        case "angry":
+            return .angry
+        case "terrified":
+            return .terrified
+        case "shouting":
+            return .shouting
+        case "whispering", "whisper":
+            return .whispering
+        default:
+            return nil // Will use default from settings
+        }
     }
     
     private func generateResponse(for text: String) -> String {
