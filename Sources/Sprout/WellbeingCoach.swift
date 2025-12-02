@@ -248,18 +248,30 @@ class WellbeingCoach: ObservableObject {
     
     private func getEmojiForResponse(_ response: String) -> String {
         if response.contains("breathing") || response.contains("breathe") {
-            return "🌬️"
+            return "😌"
         }
         if response.contains("meditation") || response.contains("mindful") {
-            return "🧘"
+            return "😇"
         }
         if response.contains("calm") || response.contains("relax") {
-            return "🌊"
+            return "😊"
         }
         if response.contains("support") || response.contains("here") {
             return "💙"
         }
-        return "🌱"
+        if response.contains("great") || response.contains("happy") || response.contains("wonderful") {
+            return "😊"
+        }
+        if response.contains("gaming") || response.contains("play") {
+            return "😄"
+        }
+        if response.contains("work") || response.contains("task") {
+            return "😎"
+        }
+        if response.contains("creative") || response.contains("art") {
+            return "🤩"
+        }
+        return "😊" // Default Sprout emoji (round)
     }
     
     func startBreathingExercise() async {
@@ -306,14 +318,14 @@ class WellbeingCoach: ObservableObject {
     
     func startMeditationSession() async {
         sessionActive = true
-        await globalVoiceAssistant?.speak("Let's take a moment for mindfulness. Find a comfortable position and close your eyes if you'd like.", emoji: "🧘")
+        await globalVoiceAssistant?.speak("Let's take a moment for mindfulness. Find a comfortable position and close your eyes if you'd like.", emoji: "😇")
         
         // Short guided meditation
         try? await Task.sleep(nanoseconds: 5_000_000_000)
-        await globalVoiceAssistant?.speak("Notice your breath, without trying to change it. Just observe.", emoji: "🌊")
+        await globalVoiceAssistant?.speak("Notice your breath, without trying to change it. Just observe.", emoji: "😌")
         
         try? await Task.sleep(nanoseconds: 10_000_000_000)
-        await globalVoiceAssistant?.speak("If your mind wanders, that's okay. Gently bring your attention back to your breath.", emoji: "🌿")
+        await globalVoiceAssistant?.speak("If your mind wanders, that's okay. Gently bring your attention back to your breath.", emoji: "😊")
         
         try? await Task.sleep(nanoseconds: 10_000_000_000)
         await globalVoiceAssistant?.speak("Take a moment to notice how you feel. You've done something wonderful for the wellbeing of your mind.", emoji: "✨")
