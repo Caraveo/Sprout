@@ -20,7 +20,7 @@ class VoiceAssistant: ObservableObject {
     private var silenceTimer: Timer?
     private var noSpeechTimer: Timer?
     private var accumulatedText = ""
-    private let pauseThreshold: TimeInterval = 1.5 // 1.5 seconds of silence after speech = process message
+    private let pauseThreshold: TimeInterval = 1.0 // 1 second of silence after speech = process message (faster response)
     private let silenceStopThreshold: TimeInterval = 8.0 // 8 seconds of total silence = stop listening
     private let noSpeechStopThreshold: TimeInterval = 5.0 // 5 seconds of no speech detected = stop listening
     private var lastSpeechTime: Date?
@@ -149,25 +149,27 @@ class VoiceAssistant: ObservableObject {
                 }
                 
                 if result.isFinal {
-                    // Final result - process immediately and send to AI
+                    // Final result - transcription is finished, process immediately and send to AI
                     DispatchQueue.main.async {
                         self.accumulatedText = text
                         self.lastSpeechTime = Date()
                         
-                        // Process immediately when speech is final - no waiting!
+                        // Transcription finished - process immediately, no waiting!
+                        print("✅ Transcription finished: \(text.prefix(50))...")
                         if !self.accumulatedText.isEmpty {
                             let textToProcess = self.accumulatedText
                             self.accumulatedText = ""
                             // Stop listening while processing (will restart after AI responds)
                             self.stopListening()
+                            // Send to AI immediately
                             self.processUserMessage(textToProcess)
                         }
                     }
                 } else {
-                    // Partial result - user is still speaking, but start pause timer
-                    // This will detect when they stop speaking (no more updates)
+                    // Partial result - user is still speaking
+                    // Start/reset pause timer to detect when they stop
                     DispatchQueue.main.async {
-                        // Start pause timer - if no more speech updates, process after pause
+                        // Reset and restart pause timer - will process when speech stops
                         self.startPauseTimer()
                     }
                 }
@@ -369,6 +371,8 @@ class VoiceAssistant: ObservableObject {
             return
         }
         
+        print("📤 Sending to AI: \(trimmedText.prefix(50))...")
+        
         let userMessage = ConversationMessage(
             text: trimmedText,
             isUser: true,
@@ -380,15 +384,16 @@ class VoiceAssistant: ObservableObject {
             self.conversationHistory.append(userMessage)
         }
         
-        // Process with wellbeing coach (with conversation context)
+        // Process with wellbeing coach immediately (with conversation context)
         Task {
             await processWithWellbeingCoach(trimmedText)
         }
     }
     
     private func processWithWellbeingCoach(_ text: String) async {
-        // Pass conversation context to WellbeingCoach
+        // Pass conversation context to WellbeingCoach immediately
         let context = getConversationContext()
+        print("🤖 Triggering AI prompt with context...")
         NotificationCenter.default.post(
             name: NSNotification.Name("UserMessageReceived"),
             object: ["text": text, "context": context]
