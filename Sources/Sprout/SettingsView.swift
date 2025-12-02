@@ -17,6 +17,7 @@ struct SettingsView: View {
                     .foregroundColor(.accentColor)
                 Text("Settings")
                     .font(.system(size: 20, weight: .bold))
+                    .foregroundColor(.primary)
                 Spacer()
                 Button(action: { dismiss() }) {
                     Image(systemName: "xmark.circle.fill")
@@ -203,7 +204,7 @@ struct SettingsView: View {
                                             VStack(spacing: 4) {
                                                 Text(voiceType.displayName)
                                                     .font(.system(size: 11, weight: .medium))
-                                                    .foregroundColor(testingVoiceStyle == voiceType ? .white : .primary)
+                                                    .foregroundColor(testingVoiceStyle == voiceType ? Color(NSColor.labelColor).opacity(0.9) : .primary)
                                             }
                                             .frame(maxWidth: .infinity)
                                             .padding(.vertical, 8)
@@ -445,11 +446,11 @@ struct SettingsSection<Content: View>: View {
             content
         }
         .padding(20)
-        .background(
-            RoundedRectangle(cornerRadius: 12)
-                .fill(Color(NSColor.controlBackgroundColor))
-                .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
-        )
+            .background(
+                RoundedRectangle(cornerRadius: 12)
+                    .fill(Color(NSColor.controlBackgroundColor))
+                    .shadow(color: Color(NSColor.shadowColor).opacity(0.1), radius: 5, x: 0, y: 2)
+            )
     }
 }
 
