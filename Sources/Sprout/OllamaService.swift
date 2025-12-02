@@ -377,11 +377,44 @@ class OllamaService {
         }
         
         // Return parsed response
-        guard let answer = answer, !answer.isEmpty else {
+        let finalAnswer = answer?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        let finalTone = tone?.trimmingCharacters(in: .whitespacesAndNewlines)
+        let finalAnalysis = analysis?.trimmingCharacters(in: .whitespacesAndNewlines)
+        
+        print("✅ Parsed result:")
+        print("   Answer: '\(finalAnswer)'")
+        print("   Tone: '\(finalTone ?? "nil")'")
+        print("   Analysis: '\(finalAnalysis ?? "nil")'")
+        
+        // If we don't have an answer, try to extract it from the raw text
+        if finalAnswer.isEmpty {
+            print("⚠️ No answer found, trying to extract from raw text...")
+            // Sometimes Ollama doesn't follow the format - try to get the first meaningful line
+            let meaningfulLines = lines.filter { line in
+                let trimmed = line.trimmingCharacters(in: .whitespacesAndNewlines)
+                return !trimmed.isEmpty && 
+                       !trimmed.lowercased().hasPrefix("tone:") &&
+                       !trimmed.lowercased().hasPrefix("analysis:") &&
+                       !trimmed.lowercased().hasPrefix("answer:")
+            }
+            if let firstLine = meaningfulLines.first {
+                let extracted = firstLine.trimmingCharacters(in: .whitespacesAndNewlines)
+                print("   ✅ Extracted answer from first meaningful line: '\(extracted)'")
+                return ParsedResponse(
+                    answer: extracted,
+                    tone: finalTone,
+                    analysis: finalAnalysis
+                )
+            }
+            print("   ❌ Could not extract answer from response")
             return nil
         }
         
-        return ParsedResponse(answer: answer.trimmingCharacters(in: .whitespacesAndNewlines), tone: tone, analysis: analysis)
+        return ParsedResponse(
+            answer: finalAnswer,
+            tone: finalTone,
+            analysis: finalAnalysis
+        )
     }
 }
 
