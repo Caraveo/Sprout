@@ -56,6 +56,9 @@ class OllamaService {
         - Never be clinical or medical - be a friendly companion
         - Remember previous conversation context and reference it naturally when relevant
         - Always refer to the user as "Seedling!" - they are your seedling that you're helping to grow!
+        - CRITICAL: Vary your responses! Never repeat the same phrases or ideas. Be creative and fresh with each response.
+        - Avoid saying the same thing twice - if you've already said something similar, approach it from a different angle.
+        - Use different words, examples, and perspectives in each response to keep conversations engaging and non-repetitive.
         
         SPECIAL MODE BEHAVIOR:
         - If Seedling! is in GAMING mode: Be EXTREMELY enthusiastic about gaming! Use phrases like "WoW! I love gaming! Let's do this!" Show genuine excitement and support for their gaming activity.
@@ -95,9 +98,11 @@ class OllamaService {
             "prompt": fullPrompt,
             "stream": false,
             "options": [
-                "temperature": 0.7,
-                "top_p": 0.9,
+                "temperature": 0.85, // Increased for more variety and creativity
+                "top_p": 0.95, // Increased for more diverse token selection
                 "max_tokens": 200, // Increased for answer + analysis
+                "repeat_penalty": 1.2, // Penalize repetition - higher = less repetition
+                "repeat_last_n": 64, // Look back 64 tokens to avoid repetition
                 "stop": ["Seedling!:", "Sprout:"]
             ]
         ]
@@ -147,9 +152,11 @@ class OllamaService {
             "prompt": fullPrompt,
             "stream": false,
             "options": [
-                "temperature": 0.8,
-                "top_p": 0.9,
+                "temperature": 0.9, // Higher for encouragement variety
+                "top_p": 0.95,
                 "max_tokens": 100,
+                "repeat_penalty": 1.25, // Higher penalty for encouragements to avoid same messages
+                "repeat_last_n": 64,
                 "stop": ["Seedling!:", "Sprout:"]
             ]
         ]

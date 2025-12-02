@@ -401,8 +401,9 @@ class VoiceAssistant: ObservableObject {
     }
     
     private func getConversationContext() -> String {
-        // Get last 5 messages for context (excluding current one)
-        let recentMessages = conversationHistory.suffix(5)
+        // Get last 8 messages for better context (excluding current one)
+        // This helps the AI see more conversation history and avoid repetition
+        let recentMessages = conversationHistory.suffix(8)
         return recentMessages.map { msg in
             let role = msg.isUser ? "Seedling!" : "Sprout"
             return "\(role): \(msg.text)"
