@@ -76,10 +76,10 @@ struct EmojiView: View {
         
         // Adjusted thresholds for loud environments
         // Higher thresholds since baseline noise is already high
-        let loudThreshold = 0.85  // Increased from 0.7 for loud environments
-        let energeticThreshold = 0.4  // Increased from 0.3
-        let wellbeingThreshold = 0.2  // Increased from 0.15
-        let calmingThreshold = 0.08  // Increased from 0.05
+        let loudThreshold: Float = 0.85  // Increased from 0.7 for loud environments
+        let energeticThreshold: Float = 0.4  // Increased from 0.3
+        let wellbeingThreshold: Float = 0.2  // Increased from 0.15
+        let calmingThreshold: Float = 0.08  // Increased from 0.05
         
         // If level > loudThreshold, show "too loud" emojis
         if lastAudioLevel > loudThreshold {
