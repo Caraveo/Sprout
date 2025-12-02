@@ -273,13 +273,17 @@ class VoiceAssistant: ObservableObject {
     private func startPauseTimer() {
         resetPauseTimer()
         
+        // Start timer to detect when user stops speaking
+        // If no speech updates for pauseThreshold seconds, process the message
         pauseTimer = Timer.scheduledTimer(withTimeInterval: pauseThreshold, repeats: false) { [weak self] _ in
             guard let self = self else { return }
             
-            // Pause detected - process accumulated text and stop listening temporarily
-            if !self.accumulatedText.isEmpty {
+            // No speech detected for pauseThreshold - user has finished speaking
+            // Process accumulated text and send to AI
+            if !self.accumulatedText.isEmpty && self.isListening {
                 let textToProcess = self.accumulatedText
                 self.accumulatedText = ""
+                print("🔇 Silence detected - processing message: \(textToProcess.prefix(50))...")
                 // Stop listening while processing (will restart after AI responds)
                 self.stopListening()
                 self.processUserMessage(textToProcess)
