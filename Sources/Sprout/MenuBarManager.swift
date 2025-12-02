@@ -123,7 +123,7 @@ struct MenuBarMainView: View {
                                     )
                                 )
                                 .frame(width: 32, height: 32)
-                            Text("🌱")
+                            Text("😊")
                                 .font(.system(size: 18))
                         }
                         Text("Sprout")
@@ -238,7 +238,7 @@ struct MenuBarMainView: View {
                     VStack(spacing: 10) {
                         MenuBarActionButton(
                             title: voiceAssistant.isListening ? "Stop Listening" : "Start Listening",
-                            emoji: voiceAssistant.isListening ? "⏸️" : "🎤",
+                            emoji: voiceAssistant.isListening ? "⏸️" : "😊",
                             color: voiceAssistant.isListening ? .red : .green
                         ) {
                             if voiceAssistant.isListening {
@@ -250,7 +250,7 @@ struct MenuBarMainView: View {
                         
                         MenuBarActionButton(
                             title: "Breathing Exercise",
-                            emoji: "🌬️",
+                            emoji: "😌",
                             color: .blue
                         ) {
                             Task {
@@ -260,7 +260,7 @@ struct MenuBarMainView: View {
                         
                         MenuBarActionButton(
                             title: "Meditation",
-                            emoji: "🧘",
+                            emoji: "😇",
                             color: .purple
                         ) {
                             Task {

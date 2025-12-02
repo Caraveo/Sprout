@@ -17,8 +17,8 @@ class WellbeingCoach: ObservableObject {
         
         var emoji: String {
             switch self {
-            case .great: return "🌟"
-            case .good: return "😊"
+            case .great: return "😊"
+            case .good: return "🙂"
             case .neutral: return "😐"
             case .low: return "😔"
             case .struggling: return "💙"
@@ -27,9 +27,9 @@ class WellbeingCoach: ObservableObject {
     }
     
     private let breathingExercises = [
-        BreathingExercise(name: "4-7-8 Breathing", duration: 120, pattern: [4, 7, 8], emoji: "🌬️"),
-        BreathingExercise(name: "Box Breathing", duration: 120, pattern: [4, 4, 4, 4], emoji: "📦"),
-        BreathingExercise(name: "Deep Calm", duration: 180, pattern: [5, 5, 5], emoji: "🧘")
+        BreathingExercise(name: "4-7-8 Breathing", duration: 120, pattern: [4, 7, 8], emoji: "😌"),
+        BreathingExercise(name: "Box Breathing", duration: 120, pattern: [4, 4, 4, 4], emoji: "😊"),
+        BreathingExercise(name: "Deep Calm", duration: 180, pattern: [5, 5, 5], emoji: "😇")
     ]
     
     struct BreathingExercise {
@@ -75,7 +75,7 @@ class WellbeingCoach: ObservableObject {
         ]
         
         let response = responses.randomElement() ?? responses[0]
-        let emoji = "🎮"
+        let emoji = "😄"
         
         await globalVoiceAssistant?.speak(response, emoji: emoji)
         
@@ -301,7 +301,7 @@ class WellbeingCoach: ObservableObject {
         }
         
         breathingExerciseActive = false
-        await globalVoiceAssistant?.speak("Great job! How do you feel now?", emoji: "🌱")
+        await globalVoiceAssistant?.speak("Great job! How do you feel now?", emoji: "😊")
     }
     
     func startMeditationSession() async {
@@ -392,7 +392,7 @@ class WellbeingCoach: ObservableObject {
                 "A little reminder: it's okay to pause, breathe, and check in with how you're feeling."
             ]
             let message = fallbackMessages.randomElement() ?? fallbackMessages[0]
-            let emoji = "🌱"
+            let emoji = "😊"
             await globalVoiceAssistant?.speak(message, emoji: emoji)
             print("💚 Delivered fallback encouragement: \(message)")
         }

@@ -37,7 +37,7 @@ struct WellbeingDashboard: View {
                     HStack(spacing: 12) {
                         ActionButton(
                             title: "Breathing",
-                            emoji: "🌬️",
+                            emoji: "😌",
                             color: .blue
                         ) {
                             Task {
@@ -47,7 +47,7 @@ struct WellbeingDashboard: View {
                         
                         ActionButton(
                             title: "Meditation",
-                            emoji: "🧘",
+                            emoji: "😇",
                             color: .purple
                         ) {
                             Task {
@@ -57,7 +57,7 @@ struct WellbeingDashboard: View {
                         
                         ActionButton(
                             title: voiceAssistant.isListening ? "Stop" : "Talk",
-                            emoji: voiceAssistant.isListening ? "⏸️" : "🎤",
+                            emoji: voiceAssistant.isListening ? "⏸️" : "😊",
                             color: voiceAssistant.isListening ? .red : .green
                         ) {
                             if voiceAssistant.isListening {

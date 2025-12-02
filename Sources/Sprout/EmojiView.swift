@@ -10,30 +10,28 @@ struct EmojiView: View {
     @State private var lastAudioLevel: Float = 0.0
     @State private var lastAudioIntensity: Float = 0.0
     
-    // Mind wellbeing emojis - positive and supportive
+    // Mind wellbeing emojis - positive and supportive (round emojis only)
     let wellbeingEmojis = [
-        "🌱", "🌿", "🌻", "🌸", "🌺", "🌷", "🌼", "🌹",
         "😊", "😄", "😃", "😁", "😆", "😍", "🥰", "😘",
         "🤗", "😉", "😋", "😎", "🤩", "🥳", "😇", "🙂",
-        "😌", "😏", "🧘", "🧘‍♀️", "🧘‍♂️", "💚", "💙", "💜",
-        "✨", "🌟", "⭐", "💫", "🌈", "☀️", "🌙", "🦋",
-        "🕊️", "🌊", "🌳", "🍃", "🌾", "🌵", "🌴", "🌲"
+        "😌", "😏", "💚", "💙", "💜", "❤️", "🧡", "💛",
+        "✨", "🌟", "⭐", "💫", "🌈", "☀️", "🌙", "🦋"
     ]
     
-    // Calming emojis for low energy states
+    // Calming emojis for low energy states (round emojis only)
     let calmingEmojis = [
-        "🌙", "🌊", "🕊️", "🧘", "😌", "😊", "🌿", "🌱",
-        "💙", "💜", "✨", "🌟", "🌳", "🍃", "🌾", "🦋"
+        "🌙", "😌", "😊", "💙", "💜", "✨", "🌟", "🦋",
+        "😇", "🙂", "💚", "⭐", "💫", "🌈", "☀️", "🥰"
     ]
     
-    // Energetic emojis for high energy
+    // Energetic emojis for high energy (round emojis only)
     let energeticEmojis = [
-        "🌻", "☀️", "🌈", "⭐", "💫", "😄", "😃", "😁",
-        "🤩", "🥳", "😍", "🥰", "✨", "🌟", "🌺", "🌸"
+        "☀️", "🌈", "⭐", "💫", "😄", "😃", "😁", "🤩",
+        "🥳", "😍", "🥰", "✨", "🌟", "😊", "😎", "😘"
     ]
     
-    // Too loud emojis
-    let tooLoudEmojis = ["😱", "😰", "🤯", "😵", "😮", "😲", "🤭", "😳"]
+    // Too loud emojis (round emojis only)
+    let tooLoudEmojis = ["😱", "😰", "😵", "😮", "😲", "🤭", "😳", "😨"]
     
     var body: some View {
         ZStack {
