@@ -31,6 +31,11 @@ struct SproutApp: App {
                     globalAppModeDetector = appModeDetector
                     // Setup menu bar
                     menuBarManager.setupMenuBar(voiceAssistant: voiceAssistant, wellbeingCoach: wellbeingCoach)
+                    
+                    // Start listening immediately when app appears
+                    DispatchQueue.main.async {
+                        voiceAssistant.startListening()
+                    }
                 }
         }
         .windowResizability(.contentSize)
@@ -51,7 +56,7 @@ struct WindowAccessor: NSViewRepresentable {
             } else {
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
                     if let window = view.window {
-                        setupWindow(window)
+                        setupWindow(window)    
                     }
                 }
             }
