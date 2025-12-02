@@ -20,7 +20,7 @@ class VoiceAssistant: ObservableObject {
     private var silenceTimer: Timer?
     private var noSpeechTimer: Timer?
     private var accumulatedText = ""
-    private let pauseThreshold: TimeInterval = 2.0 // 2 seconds of silence = pause and process
+    private let pauseThreshold: TimeInterval = 1.0 // 1 second fallback (not used for isFinal, but kept for safety)
     private let silenceStopThreshold: TimeInterval = 8.0 // 8 seconds of silence = stop listening
     private let noSpeechStopThreshold: TimeInterval = 5.0 // 5 seconds of no speech detected = stop listening
     private var lastSpeechTime: Date?
@@ -149,12 +149,19 @@ class VoiceAssistant: ObservableObject {
                 }
                 
                 if result.isFinal {
-                    // Final result - process after a pause
+                    // Final result - process immediately and send to AI
                     DispatchQueue.main.async {
                         self.accumulatedText = text
                         self.lastSpeechTime = Date()
-                        self.startPauseTimer()
-                        self.startSilenceTimer() // Also start silence timer for auto-stop
+                        
+                        // Process immediately when speech is final - no waiting!
+                        if !self.accumulatedText.isEmpty {
+                            let textToProcess = self.accumulatedText
+                            self.accumulatedText = ""
+                            // Stop listening while processing (will restart after AI responds)
+                            self.stopListening()
+                            self.processUserMessage(textToProcess)
+                        }
                     }
                 }
             }
