@@ -386,7 +386,7 @@ class VoiceAssistant: ObservableObject {
         }.joined(separator: "\n")
     }
     
-    func speak(_ text: String, emoji: String? = nil, analysis: String? = nil) async {
+    func speak(_ text: String, emoji: String? = nil, analysis: String? = nil, voiceStyle: SettingsManager.VoiceType? = nil) async {
         await MainActor.run {
             self.isSpeaking = true
         }
@@ -398,13 +398,21 @@ class VoiceAssistant: ObservableObject {
         let serviceAvailable = await openVoiceService.checkServiceAvailable()
         
         if serviceAvailable {
-        // Get voice type from settings (use shared instance)
+        // Get voice type - use provided style, test style, or default from settings
         let settingsManager = SettingsManager.shared
-        let voiceType = settingsManager.voiceType.openVoiceSpeaker
+        let effectiveVoiceType: SettingsManager.VoiceType
+        if let providedStyle = voiceStyle {
+            effectiveVoiceType = providedStyle
+        } else if let testStyle = settingsManager.testVoiceStyle {
+            effectiveVoiceType = testStyle
+        } else {
+            effectiveVoiceType = settingsManager.voiceType
+        }
+        let voiceTypeString = effectiveVoiceType.openVoiceSpeaker
             
             // Use OpenVoice service to generate speech with Jon's voice
-            print("🎤 Attempting OpenVoice synthesis... (voice: \(SettingsManager.shared.voiceType.displayName))")
-            if let audioData = await openVoiceService.synthesize(text: textForSpeech, voiceType: voiceType) {
+            print("🎤 Attempting OpenVoice synthesis... (voice: \(effectiveVoiceType.displayName))")
+            if let audioData = await openVoiceService.synthesize(text: textForSpeech, voiceType: voiceTypeString) {
                 print("✅ Using OpenVoice (Jon's voice) for speech")
                 await playAudio(audioData)
             } else {

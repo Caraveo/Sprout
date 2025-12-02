@@ -66,6 +66,10 @@ class SettingsManager: ObservableObject {
         case encouraging = "encouraging"
         case happy = "happy"
         case sad = "sad"
+        case angry = "angry"
+        case terrified = "terrified"
+        case shouting = "shouting"
+        case whispering = "whispering"
         
         var id: String { self.rawValue }
         
@@ -76,6 +80,10 @@ class SettingsManager: ObservableObject {
             case .encouraging: return "Encouraging"
             case .happy: return "Happy"
             case .sad: return "Sad"
+            case .angry: return "Angry"
+            case .terrified: return "Terrified"
+            case .shouting: return "Shouting"
+            case .whispering: return "Whispering"
             }
         }
         
@@ -87,9 +95,16 @@ class SettingsManager: ObservableObject {
             case .encouraging: return "friendly"
             case .happy: return "cheerful"
             case .sad: return "sad"
+            case .angry: return "angry"
+            case .terrified: return "terrified"
+            case .shouting: return "shouting"
+            case .whispering: return "whispering"
             }
         }
     }
+    
+    // Temporary voice style for testing (doesn't save to settings)
+    @Published var testVoiceStyle: VoiceType? = nil
     
     enum CloudProvider: String, CaseIterable {
         case openai = "OpenAI"

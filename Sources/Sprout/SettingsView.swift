@@ -5,6 +5,8 @@ struct SettingsView: View {
     @Environment(\.dismiss) var dismiss
     @State private var showingAPIKey = false
     @State private var testConnectionStatus: String? = nil
+    @State private var testingVoiceStyle: SettingsManager.VoiceType? = nil
+    @State private var voiceTestStatus: String? = nil
     
     var body: some View {
         VStack(spacing: 0) {
@@ -118,12 +120,81 @@ struct SettingsView: View {
                                     Text(voiceType.displayName).tag(voiceType)
                                 }
                             }
-                            .pickerStyle(.segmented)
+                            .pickerStyle(.menu)
+                            .frame(maxWidth: .infinity, alignment: .leading)
                             
                             Text("Choose how Sprout's voice sounds: \(settings.voiceType.displayName)")
                                 .font(.caption)
                                 .foregroundColor(.secondary)
                                 .frame(maxWidth: .infinity, alignment: .leading)
+                            
+                            Divider()
+                                .padding(.vertical, 8)
+                            
+                            // Test Voice Styles Section
+                            VStack(alignment: .leading, spacing: 12) {
+                                Text("Test Voice Styles")
+                                    .font(.system(size: 13, weight: .semibold))
+                                    .foregroundColor(.primary)
+                                
+                                Text("Try different voice styles without changing your saved setting")
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                                
+                                // Grid of voice style test buttons
+                                LazyVGrid(columns: [
+                                    GridItem(.flexible()),
+                                    GridItem(.flexible()),
+                                    GridItem(.flexible())
+                                ], spacing: 8) {
+                                    ForEach(SettingsManager.VoiceType.allCases) { voiceType in
+                                        Button(action: {
+                                            testVoiceStyle(voiceType)
+                                        }) {
+                                            VStack(spacing: 4) {
+                                                Text(voiceType.displayName)
+                                                    .font(.system(size: 11, weight: .medium))
+                                                    .foregroundColor(testingVoiceStyle == voiceType ? .white : .primary)
+                                            }
+                                            .frame(maxWidth: .infinity)
+                                            .padding(.vertical, 8)
+                                            .background(
+                                                testingVoiceStyle == voiceType ?
+                                                Color.accentColor :
+                                                Color.secondary.opacity(0.1)
+                                            )
+                                            .cornerRadius(6)
+                                        }
+                                        .buttonStyle(PlainButtonStyle())
+                                    }
+                                }
+                                
+                                if let status = voiceTestStatus {
+                                    Text(status)
+                                        .font(.caption)
+                                        .foregroundColor(status.contains("✅") ? .green : .secondary)
+                                        .frame(maxWidth: .infinity, alignment: .leading)
+                                }
+                                
+                                if settings.testVoiceStyle != nil {
+                                    Button(action: {
+                                        settings.testVoiceStyle = nil
+                                        testingVoiceStyle = nil
+                                        voiceTestStatus = "✅ Test mode cleared - using saved voice style"
+                                        DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+                                            voiceTestStatus = nil
+                                        }
+                                    }) {
+                                        HStack {
+                                            Image(systemName: "xmark.circle.fill")
+                                            Text("Clear Test Mode")
+                                        }
+                                        .font(.caption)
+                                        .foregroundColor(.red)
+                                    }
+                                    .buttonStyle(PlainButtonStyle())
+                                }
+                            }
                         }
                     }
                     
@@ -274,6 +345,29 @@ struct SettingsView: View {
     
     private func resetSettings() {
         settings.resetToDefaults()
+    }
+    
+    private func testVoiceStyle(_ voiceType: SettingsManager.VoiceType) {
+        testingVoiceStyle = voiceType
+        settings.testVoiceStyle = voiceType
+        voiceTestStatus = "Testing \(voiceType.displayName)..."
+        
+        // Get global voice assistant and test the voice
+        Task {
+            // Access globalVoiceAssistant from WellbeingCoach file
+            if let voiceAssistant = globalVoiceAssistant {
+                let testText = "Hello Seedling! This is how I sound with \(voiceType.displayName.lowercased()) voice."
+                await voiceAssistant.speak(testText, voiceStyle: voiceType)
+                
+                await MainActor.run {
+                    voiceTestStatus = "✅ Tested \(voiceType.displayName) - This style will be used until you change it or clear test mode"
+                }
+            } else {
+                await MainActor.run {
+                    voiceTestStatus = "❌ Voice assistant not available. Please restart the app."
+                }
+            }
+        }
     }
 }
 
