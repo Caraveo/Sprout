@@ -273,8 +273,12 @@ class OllamaService {
     }
     
     private func parseResponse(_ text: String) -> ParsedResponse? {
+        print("🔍 Parsing response text (\(text.count) characters)...")
+        print("📄 Full response text:\n\(text)")
+        
         // Parse format: "answer: ...\n\ntone: ...\n\nanalysis: ..."
         let lines = text.components(separatedBy: "\n")
+        print("📝 Split into \(lines.count) lines")
         var answer: String?
         var tone: String?
         var analysis: String?
